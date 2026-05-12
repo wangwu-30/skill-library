@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -eu
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+python3 house-skills/core/skill-librarian/scripts/audit_house_skills.py --root "$repo_root"
+python3 house-skills/core/skill-librarian/scripts/audit_tracked_repos.py --root "$repo_root"

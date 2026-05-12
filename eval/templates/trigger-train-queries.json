@@ -1,0 +1,14 @@
+[
+  {
+    "id": "example-train-01",
+    "query": "This README is technically correct but sounds robotic. Rewrite it so it reads like an experienced maintainer wrote it.",
+    "should_trigger": true,
+    "why": "Direct request to revise existing technical writing for tone and credibility."
+  },
+  {
+    "id": "example-train-02",
+    "query": "Explain what an ADR is and when teams should use one.",
+    "should_trigger": false,
+    "why": "This is a concept explanation request, not an editing request."
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "repos": [
+    {
+      "id": "voltagent-awesome-agent-skills",
+      "local_dir": "voltagent-awesome-agent-skills",
+      "repo_url": "https://github.com/VoltAgent/awesome-agent-skills",
+      "reason": "Removed on 2026-04-05 because it contributed zero SKILL.md files and acted as a low-signal curated list for this library.",
+      "blacklisted_at": "2026-04-05T22:00:33+08:00"
+    },
+    {
+      "id": "yusufkaraaslan-skill-seekers",
+      "local_dir": "yusufkaraaslan-skill-seekers",
+      "repo_url": "https://github.com/yusufkaraaslan/Skill_Seekers",
+      "reason": "Removed on 2026-04-05 because it only contributed one generic skill-builder flow that overlapped heavily with local conversion and authoring skills.",
+      "blacklisted_at": "2026-04-05T22:00:33+08:00"
+    },
+    {
+      "id": "voltagent-awesome-claude-code-subagents",
+      "local_dir": "voltagent-awesome-claude-code-subagents",
+      "repo_url": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+      "reason": "Removed on 2026-04-05 because it contributed zero SKILL.md files and failed tracked-repo audit as a low-signal curated list.",
+      "blacklisted_at": "2026-04-05T22:56:45+08:00"
+    }
+  ]
+}

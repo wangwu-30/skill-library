@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "skill-library": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "mcp",
+        "python",
+        "/path/to/skills/house-skills/core/skill-librarian/scripts/skill_mcp_server.py",
+        "--root",
+        "/path/to/skills"
+      ]
+    }
+  }
+}

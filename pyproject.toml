@@ -1,0 +1,10 @@
+[project]
+name = "skill-library"
+version = "0.1.0"
+description = "A local skill library with an MCP-facing agent librarian."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+  "mcp>=1.27.1"
+]

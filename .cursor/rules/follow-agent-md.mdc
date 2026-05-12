@@ -1,0 +1,9 @@
+---
+description: Follow project guidance from Agent.md
+alwaysApply: true
+---
+
+# Project Guidance
+
+- Follow `Agent.md` as the canonical project guidance for this repository.
+- Treat this Cursor rule as a thin adapter, not a second rule body.

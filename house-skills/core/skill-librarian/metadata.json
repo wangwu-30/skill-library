@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "version": "1.2.1",
+  "owner": "wangwu",
+  "stage": "core",
+  "status": "stable",
+  "created_at": "2026-04-04T00:00:00+08:00",
+  "updated_at": "2026-05-12T05:38:46+00:00",
+  "last_used_at": null,
+  "use_count": 0,
+  "expires_at": null,
+  "usage_tracking": {
+    "mode": "none"
+  },
+  "derives_from": null,
+  "replaces": [],
+  "compatibility": {
+    "backward_compatible": true,
+    "notes": ""
+  },
+  "source": {
+    "kind": "house",
+    "repo_url": "local://house-skills/core/skill-librarian",
+    "skill_path": "house-skills/core/skill-librarian",
+    "author": "wangwu"
+  },
+  "notes": "Telemetry belongs in the managing agent layer, not inside skill bodies. Version 1.2.1 keeps MCP as one intent tool while search, draft creation, lifecycle actions, and experiment scaffolding remain internal librarian machinery. Temporary skills include the request context and nearby examples so callers get a usable task card, not an empty template. Public-facing docs now avoid machine-specific root paths."
+}

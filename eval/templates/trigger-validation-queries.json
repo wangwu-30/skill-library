@@ -1,0 +1,14 @@
+[
+  {
+    "id": "example-validation-01",
+    "query": "Tighten this runbook section. It keeps repeating itself and never gets to the point.",
+    "should_trigger": true,
+    "why": "Editing an existing technical document for directness should consult the skill."
+  },
+  {
+    "id": "example-validation-02",
+    "query": "Translate this deployment guide to Chinese.",
+    "should_trigger": false,
+    "why": "Translation is outside the editing scope."
+  }
+]

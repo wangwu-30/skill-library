@@ -1,0 +1,7 @@
+interface:
+  display_name: "Skill Librarian"
+  short_description: "Search, refresh, and govern the skill library"
+  default_prompt: "Use $skill-librarian to search the local skill catalog, refresh tracked repositories, triage a skill repository, or review house-skill lifecycle decisions."
+
+policy:
+  allow_implicit_invocation: false

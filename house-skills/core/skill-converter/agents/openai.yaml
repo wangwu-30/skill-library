@@ -1,0 +1,7 @@
+interface:
+  display_name: "Skill Converter"
+  short_description: "Convert upstream skills into house format"
+  default_prompt: "Use $skill-converter to convert a useful upstream skill or small upstream slice into a concise local house skill with preserved attribution."
+
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,184 @@
+{
+  "repos": [
+    {
+      "id": "house-skills-core",
+      "local_dir": "house-skills/core",
+      "repo_url": "local://house-skills/core",
+      "kind": "house-skill-space",
+      "priority": "core",
+      "tags": ["local", "house", "core"],
+      "notes": "Stable house skills kept for long-term reuse."
+    },
+    {
+      "id": "house-skills-young",
+      "local_dir": "house-skills/young",
+      "repo_url": "local://house-skills/young",
+      "kind": "house-skill-space",
+      "priority": "high",
+      "tags": ["local", "house", "young"],
+      "notes": "Short-lived generated or converted skills with TTL and promotion checks."
+    },
+    {
+      "id": "house-skills-archive",
+      "local_dir": "house-skills/archive",
+      "repo_url": "local://house-skills/archive",
+      "kind": "house-skill-space",
+      "priority": "medium",
+      "tags": ["local", "house", "archive"],
+      "notes": "Archived house skills retained for provenance and history."
+    },
+    {
+      "id": "anthropics-skills",
+      "local_dir": "anthropics-skills",
+      "repo_url": "https://github.com/anthropics/skills",
+      "kind": "official-library",
+      "priority": "core",
+      "tags": ["official", "claude", "general"],
+      "notes": "Official Anthropic skills library."
+    },
+    {
+      "id": "openai-skills",
+      "local_dir": "openai-skills",
+      "repo_url": "https://github.com/openai/skills",
+      "kind": "official-library",
+      "priority": "core",
+      "tags": ["official", "codex", "general"],
+      "notes": "Official OpenAI skills library."
+    },
+    {
+      "id": "vercel-labs-agent-skills",
+      "local_dir": "vercel-labs-agent-skills",
+      "repo_url": "https://github.com/vercel-labs/agent-skills",
+      "kind": "official-library",
+      "priority": "core",
+      "tags": ["official", "full-stack", "deployment"],
+      "notes": "Official Vercel agent skills."
+    },
+    {
+      "id": "sickn33-antigravity-awesome-skills",
+      "local_dir": "sickn33-antigravity-awesome-skills",
+      "repo_url": "https://github.com/sickn33/antigravity-awesome-skills",
+      "kind": "aggregator",
+      "priority": "core",
+      "tags": ["catalog", "multi-tool", "installable"],
+      "notes": "Large installable aggregator with bundles, workflows, and plugins."
+    },
+    {
+      "id": "wshobson-agents",
+      "local_dir": "wshobson-agents",
+      "repo_url": "https://github.com/wshobson/agents",
+      "kind": "community-library",
+      "priority": "core",
+      "tags": ["community", "agents", "general"],
+      "notes": "Large agent and skill collection."
+    },
+    {
+      "id": "alirezarezvani-claude-skills",
+      "local_dir": "alirezarezvani-claude-skills",
+      "repo_url": "https://github.com/alirezarezvani/claude-skills",
+      "kind": "community-library",
+      "priority": "core",
+      "tags": ["community", "claude", "codex", "general"],
+      "notes": "Cross-tool skill library."
+    },
+    {
+      "id": "composio-awesome-claude-skills",
+      "local_dir": "composio-awesome-claude-skills",
+      "repo_url": "https://github.com/ComposioHQ/awesome-claude-skills",
+      "kind": "aggregator",
+      "priority": "core",
+      "tags": ["catalog", "claude", "community"],
+      "notes": "Large curated Claude skill collection."
+    },
+    {
+      "id": "levnikolaevich-claude-code-skills",
+      "local_dir": "levnikolaevich-claude-code-skills",
+      "repo_url": "https://github.com/levnikolaevich/claude-code-skills",
+      "kind": "community-library",
+      "priority": "high",
+      "tags": ["community", "claude", "general"],
+      "notes": "Broad practical skill library."
+    },
+    {
+      "id": "agentskills-spec",
+      "local_dir": "agentskills-spec",
+      "repo_url": "https://github.com/agentskills/agentskills",
+      "kind": "reference-spec",
+      "priority": "high",
+      "tags": ["spec", "reference", "governance"],
+      "notes": "Open standard and reference material for agent skills."
+    },
+    {
+      "id": "obra-superpowers",
+      "local_dir": "obra-superpowers",
+      "repo_url": "https://github.com/obra/superpowers",
+      "kind": "community-library",
+      "priority": "high",
+      "tags": ["community", "general", "workflows"],
+      "notes": "General-purpose power skills and workflows."
+    },
+    {
+      "id": "jezweb-claude-skills",
+      "local_dir": "jezweb-claude-skills",
+      "repo_url": "https://github.com/jezweb/claude-skills",
+      "kind": "domain-library",
+      "priority": "high",
+      "tags": ["frontend", "react", "cloudflare", "tailwind"],
+      "notes": "Frontend and app delivery focused skills."
+    },
+    {
+      "id": "lackeyjb-playwright-skill",
+      "local_dir": "lackeyjb-playwright-skill",
+      "repo_url": "https://github.com/lackeyjb/playwright-skill",
+      "kind": "domain-library",
+      "priority": "high",
+      "tags": ["frontend", "testing", "playwright"],
+      "notes": "Playwright-oriented testing skill."
+    },
+    {
+      "id": "timescale-pg-aiguide",
+      "local_dir": "timescale-pg-aiguide",
+      "repo_url": "https://github.com/timescale/pg-aiguide",
+      "kind": "domain-library",
+      "priority": "high",
+      "tags": ["backend", "postgres", "database"],
+      "notes": "Postgres and Timescale guide-style skills."
+    },
+    {
+      "id": "zxkane-aws-skills",
+      "local_dir": "zxkane-aws-skills",
+      "repo_url": "https://github.com/zxkane/aws-skills",
+      "kind": "domain-library",
+      "priority": "high",
+      "tags": ["backend", "devops", "aws", "cloud"],
+      "notes": "AWS-focused operational skills."
+    },
+    {
+      "id": "conorluddy-ios-simulator-skill",
+      "local_dir": "conorluddy-ios-simulator-skill",
+      "repo_url": "https://github.com/conorluddy/ios-simulator-skill",
+      "kind": "domain-library",
+      "priority": "high",
+      "tags": ["ios", "swift", "simulator"],
+      "notes": "iOS simulator workflow skill."
+    },
+    {
+      "id": "pleaseprompto-notebooklm-skill",
+      "local_dir": "pleaseprompto-notebooklm-skill",
+      "repo_url": "https://github.com/PleasePrompto/notebooklm-skill",
+      "kind": "domain-library",
+      "priority": "medium",
+      "tags": ["docs", "research", "notebooklm"],
+      "notes": "NotebookLM research workflow skill."
+    },
+    {
+      "id": "gl0bal01-malware-analysis-claude-skills",
+      "local_dir": "gl0bal01-malware-analysis-claude-skills",
+      "repo_url": "https://github.com/gl0bal01/malware-analysis-claude-skills",
+      "kind": "domain-library",
+      "priority": "medium",
+      "tags": ["security", "analysis", "malware"],
+      "notes": "Security analysis skill set."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "young": {
+    "default_ttl_days": 14,
+    "refresh_ttl_days_on_use": 14,
+    "auto_archive_expired": false
+  },
+  "promotion": {
+    "min_use_count": 3,
+    "recent_use_within_days": 14,
+    "auto_promote_eligible": false
+  },
+  "archive": {
+    "hard_delete_enabled": false,
+    "keep_reason_history": true
+  }
+}

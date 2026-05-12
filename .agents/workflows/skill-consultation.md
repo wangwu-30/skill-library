@@ -17,13 +17,13 @@ Use this workflow when a request raises the question:
 
 ## Workflow
 
-1. Read [docs/skill-consultation-decision-template.md](/Users/wangwu/claude/skills/docs/skill-consultation-decision-template.md).
+1. Read [docs/skill-consultation-decision-template.md](../../docs/skill-consultation-decision-template.md).
 2. Normalize the need:
    write the real user outcome and the workflow layer before searching.
 3. Search the catalog before proposing any new draft:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/search_skill_catalog.py --root /Users/wangwu/claude/skills --query "<keywords>"
+python3 house-skills/core/skill-librarian/scripts/search_skill_catalog.py --root "$PWD" --query "<keywords>"
 ```
 
 4. Review the best current fit:
@@ -31,7 +31,7 @@ python3 house-skills/core/skill-librarian/scripts/search_skill_catalog.py --root
    Consult a house skill through the runtime to load its body and record usage:
 
    ```bash
-   python3 house-skills/core/skill-librarian/scripts/skill_consult.py --root /Users/wangwu/claude/skills <skill-name>
+   python3 house-skills/core/skill-librarian/scripts/skill_consult.py --root "$PWD" <skill-name>
    ```
 5. Run the gap assessment:
    identify whether the missing behavior is central, repeated, and distinct enough to justify maintenance.

@@ -53,6 +53,11 @@ STAGE_ROOTS = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Audit house-skill integrity.")
     parser.add_argument("--root", type=Path, default=None, help="Skill library root")
+    parser.add_argument(
+        "--check-freshness",
+        action="store_true",
+        help="Also compare metadata updated_at against file mtimes. This is useful in a live worktree but noisy in fresh git clones.",
+    )
     return parser.parse_args()
 
 
@@ -122,7 +127,7 @@ def check_source_links(skill_md: Path, issues: list[str]) -> None:
             issues.append(f"missing linked source file: {target}")
 
 
-def check_metadata(skill_dir: Path, root: Path, issues: list[str]) -> None:
+def check_metadata(skill_dir: Path, root: Path, issues: list[str], check_freshness: bool) -> None:
     metadata_path = skill_dir / "metadata.json"
     if not metadata_path.exists():
         issues.append("missing metadata.json")
@@ -206,6 +211,8 @@ def check_metadata(skill_dir: Path, root: Path, issues: list[str]) -> None:
     if updated_at is None:
         issues.append("metadata updated_at is missing or invalid")
         return
+    if not check_freshness:
+        return
 
     newest_mtime = 0.0
     newest_path: Path | None = None
@@ -236,7 +243,7 @@ def check_agents(skill_dir: Path, issues: list[str]) -> None:
         issues.append("missing agents/openai.yaml")
 
 
-def audit_skill(skill_dir: Path, root: Path) -> list[str]:
+def audit_skill(skill_dir: Path, root: Path, check_freshness: bool) -> list[str]:
     issues: list[str] = []
     skill_md = skill_dir / "SKILL.md"
     if not skill_md.exists():
@@ -244,7 +251,7 @@ def audit_skill(skill_dir: Path, root: Path) -> list[str]:
     check_frontmatter(skill_md, issues)
     check_sections(skill_md, issues)
     check_source_links(skill_md, issues)
-    check_metadata(skill_dir, root, issues)
+    check_metadata(skill_dir, root, issues, check_freshness)
     check_agents(skill_dir, issues)
     return issues
 
@@ -267,7 +274,7 @@ def main() -> int:
     failures = 0
     skills = iter_house_skills(root)
     for skill_dir in skills:
-        issues = audit_skill(skill_dir, root)
+        issues = audit_skill(skill_dir, root, args.check_freshness)
         if issues:
             failures += 1
             print(f"FAIL  {skill_dir.relative_to(root)}")

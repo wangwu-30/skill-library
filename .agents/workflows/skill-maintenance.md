@@ -25,13 +25,13 @@ Use this workflow for requests that change the library itself rather than only c
 8. If `house-skills/` changed, run:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/audit_house_skills.py --root /Users/wangwu/claude/skills
+python3 house-skills/core/skill-librarian/scripts/audit_house_skills.py --root "$PWD"
 ```
 
 9. If `catalog/tracked_repos.json` changed, run:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/audit_tracked_repos.py --root /Users/wangwu/claude/skills
+python3 house-skills/core/skill-librarian/scripts/audit_tracked_repos.py --root "$PWD"
 ```
 
 10. If hooks are not installed yet, run:

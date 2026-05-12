@@ -11,7 +11,7 @@ Use this workflow after a consultation has already concluded that a skill should
 
 ## Workflow
 
-1. Read [docs/skill-draft-materialization-template.md](/Users/wangwu/claude/skills/docs/skill-draft-materialization-template.md).
+1. Read [docs/skill-draft-materialization-template.md](../../docs/skill-draft-materialization-template.md).
 2. Confirm the consultation decision is explicit:
    `create draft` or `update existing`.
 3. Restate the smallest reusable unit before editing any files.
@@ -24,7 +24,7 @@ Use this workflow after a consultation has already concluded that a skill should
 7. If `house-skills/` changed, run:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/audit_house_skills.py --root /Users/wangwu/claude/skills
+python3 house-skills/core/skill-librarian/scripts/audit_house_skills.py --root "$PWD"
 ```
 
 8. Report:

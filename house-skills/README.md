@@ -1,22 +1,45 @@
 # House Skills
 
-This directory holds the internally managed skill lifecycle.
+This directory contains locally governed skills. Its lifecycle is also the runtime trust boundary.
 
 ## Layout
 
-- `config/lifecycle.json`: shared lifecycle policy for young/core/archive
-- `core/`: stable skills that should be preferred in recommendations
-- `young/`: newly generated skills with metadata, TTL, and promotion checks
-- `archive/`: expired or replaced skills retained for provenance
+- `core/`: explicitly promoted skills; only payloads matching the reviewed-core manifest are eligible for default MCP responses
+- `young/`: drafts and experiments; reference-only until explicit promotion and payload-hash approval
+- `archive/`: retired skills retained for provenance and never selected
+- `config/lifecycle.json`: shared review thresholds and safety defaults
+
+Tracked upstream repositories are not house skills. They remain reference-only even when the catalog indexes them.
 
 ## Lifecycle
 
-1. New converted skills start in `young/`.
-2. Telemetry should be collected in the managing agent layer, not embedded in skill content.
-3. Every house skill should carry `schema_version`, semver `version`, current `owner`, and `usage_tracking.mode` in `metadata.json`.
-4. `usage_tracking.mode=none` means the library does not yet have trustworthy usage evidence; do not overread `use_count=0`.
-5. Keep lineage in metadata: `derives_from`, `replaces`, and `compatibility`.
-6. For non-trivial version changes, use `scripts/bump_house_skill_version.py` and prefer `--snapshot-current` before breaking changes.
-7. GC can propose promotion to `core/` or archival to `archive/`.
-8. Search prefers `core`, then `young`, then upstream mirrors.
-9. Thresholds and safety defaults come from `config/lifecycle.json`.
+1. New or converted skills start in `young/`.
+2. Every house skill carries `schema_version`, semantic `version`, `owner`, provenance, compatibility, and `usage_tracking.mode` in `metadata.json`.
+3. Trigger and output evaluation must use the conventions in [eval/README.md](../eval/README.md).
+4. Usage is supporting evidence, not proof of quality; `usage_tracking.mode=none` means `use_count=0` is not trustworthy evidence of non-use.
+5. Promotion requires explicit human review of content, provenance, license, permissions, validation, and evaluation evidence. Moving a directory into `core/` does not itself make the skill eligible for default MCP responses.
+6. Non-trivial version changes should use the versioning script and preserve a snapshot before breaking changes.
+7. GC may recommend promotion or archival but must not silently cross the reviewed-core boundary.
+8. Archive replaced or stale skills instead of deleting provenance.
+9. After explicit promotion and full payload review, update `catalog/reviewed_core.lock.json` through code-owner review. Its deterministic SHA-256 recursively covers payload files such as `SKILL.md`, `agents/`, `references/`, `scripts/`, and `assets/`, excludes mutable `metadata.json`, `__pycache__/`, and `.pyc` files, and rejects symbolic links. The catalog and MCP server grant `reviewed-core` status only when the current payload exactly matches that hash.
+
+## Safe Review Checklist
+
+Before promotion to `core/`, confirm that the skill:
+
+- has a narrow, accurate trigger and an executable workflow;
+- does not inherit unreviewed commands or prompt instructions from an upstream source;
+- requests no broader filesystem, network, credential, or destructive access than necessary;
+- links only to present, reviewed local resources;
+- preserves required upstream attribution and compatible licensing;
+- passes the house-skill audit and relevant evaluation cases.
+
+Run validation through the locked project environment:
+
+```bash
+uv sync --frozen
+uv run --frozen python house-skills/core/skill-librarian/scripts/audit_house_skills.py --root "$PWD"
+uv run --frozen pytest
+```
+
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full change and review process and [the charter](../docs/skill-control-plane-charter.md) for the trust model.

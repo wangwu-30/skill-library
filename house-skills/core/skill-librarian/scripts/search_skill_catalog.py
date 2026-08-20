@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import argparse
-import json
+import subprocess
+import sys
 from pathlib import Path
 
-from skill_library_utils import locate_library_root
+from skill_library_utils import locate_library_root, read_json
+
+MAX_QUERY_CHARS = 2_000
+MAX_RESULTS = 100
 
 
 def parse_args() -> argparse.Namespace:
@@ -88,7 +92,20 @@ def main() -> int:
     args = parse_args()
     root = resolve_root(args.root)
     catalog_path = root / "catalog" / "skill_catalog.json"
-    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    if args.limit < 1 or args.limit > MAX_RESULTS:
+        raise SystemExit(f"--limit must be between 1 and {MAX_RESULTS}")
+    if not args.query.strip():
+        raise SystemExit("--query must not be empty")
+    if len(args.query) > MAX_QUERY_CHARS:
+        raise SystemExit(f"--query exceeds {MAX_QUERY_CHARS} characters")
+    if not catalog_path.exists():
+        builder = Path(__file__).with_name("build_skill_catalog.py")
+        result = subprocess.run([sys.executable, str(builder), "--root", str(root)], check=False)
+        if result.returncode != 0:
+            return result.returncode
+    catalog = read_json(catalog_path)
+    if not isinstance(catalog.get("skills"), list):
+        raise SystemExit("catalog is invalid: missing skills list")
 
     query_phrase = " ".join(args.query.lower().split())
     query_tokens = [token for token in query_phrase.split() if token]
@@ -110,9 +127,7 @@ def main() -> int:
         description = entry.get("description") or entry.get("title") or "No description"
         stage = entry.get("lifecycle_stage", "upstream")
         display_path = entry.get("skill_root_path") or entry["repo_local_dir"]
-        print(
-            f"{index}. [{score}] [{stage}] {entry['repo_id']} :: {display_path} :: {description}"
-        )
+        print(f"{index}. [{score}] [{stage}] {entry['repo_id']} :: {display_path} :: {description}")
 
     if not scored:
         print("No matches. Rebuild the catalog or broaden the query.")

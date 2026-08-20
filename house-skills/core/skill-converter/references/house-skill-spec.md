@@ -66,7 +66,7 @@ For converted skills, always preserve:
 - Bump minor for backward-compatible workflow additions or stronger guardrails.
 - Bump major when trigger boundaries, output contract, validation expectations, or breaking workflow assumptions change.
 - If a breaking version still matters for rollback or provenance, archive the replaced version instead of silently overwriting it.
-- Prefer `python3 house-skills/core/skill-librarian/scripts/bump_house_skill_version.py --root "$PWD" --skill-path <path> --bump <patch|minor|major> --snapshot-current` for deterministic version changes.
+- Prefer `uv run --frozen python house-skills/core/skill-librarian/scripts/bump_house_skill_version.py --root "$PWD" --skill-path <path> --bump <patch|minor|major> --snapshot-current` for deterministic version changes.
 
 ## Usage Tracking Modes
 

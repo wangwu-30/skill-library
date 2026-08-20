@@ -8,6 +8,7 @@ from pathlib import Path
 
 from skill_library_utils import (
     DEFAULT_USAGE_TRACKING_MODE,
+    ensure_within_root,
     iso_now,
     load_lifecycle_config,
     locate_library_root,
@@ -36,9 +37,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def resolve_skill_path(root: Path, skill_path: Path) -> Path:
-    if skill_path.is_absolute():
-        return skill_path.resolve()
-    return (root / skill_path).resolve()
+    candidate = skill_path if skill_path.is_absolute() else root / skill_path
+    return ensure_within_root(candidate, root / "house-skills", label="skill path")
 
 
 def main() -> int:
@@ -71,9 +71,7 @@ def main() -> int:
             if args.refresh_young_ttl_days is not None
             else int(lifecycle_config["young"]["refresh_ttl_days_on_use"])
         )
-        expires_at = dt.datetime.now(dt.timezone.utc) + dt.timedelta(
-            days=refresh_ttl_days
-        )
+        expires_at = dt.datetime.now(dt.UTC) + dt.timedelta(days=refresh_ttl_days)
         metadata["expires_at"] = expires_at.isoformat()
 
     write_json(metadata_path, metadata)

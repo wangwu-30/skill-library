@@ -1,4 +1,5 @@
 {
+  "lock_file": "catalog/tracked_repos.lock.json",
   "repos": [
     {
       "id": "house-skills-core",

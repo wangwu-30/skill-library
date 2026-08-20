@@ -7,6 +7,7 @@ import datetime as dt
 import re
 from pathlib import Path
 
+import yaml
 from skill_library_utils import (
     METADATA_SCHEMA_VERSION,
     default_skill_version,
@@ -14,6 +15,10 @@ from skill_library_utils import (
     locate_library_root,
     write_json,
 )
+
+NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+MAX_NAME_LENGTH = 63
+MAX_DESCRIPTION_LENGTH = 1024
 
 
 def parse_args() -> argparse.Namespace:
@@ -46,11 +51,13 @@ def parse_args() -> argparse.Namespace:
 
 
 def normalize_name(raw_name: str) -> str:
-    lowered = raw_name.strip().lower()
-    normalized = re.sub(r"[^a-z0-9]+", "-", lowered).strip("-")
-    if not normalized:
-        raise ValueError("skill name must contain at least one alphanumeric character")
-    return normalized
+    if (
+        not isinstance(raw_name, str)
+        or len(raw_name) > MAX_NAME_LENGTH
+        or not NAME_PATTERN.fullmatch(raw_name)
+    ):
+        raise ValueError("skill name must be lowercase hyphen-case and at most 63 characters")
+    return raw_name
 
 
 def title_from_name(name: str) -> str:
@@ -67,10 +74,24 @@ def markdown_block(value: str, fallback: str) -> str:
     return cleaned if cleaned else fallback
 
 
+def validate_single_line(value: str, field: str, max_length: int) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field} must be a non-empty string")
+    if "\n" in value or "\r" in value:
+        raise ValueError(f"{field} must be single-line")
+    if len(value) > max_length:
+        raise ValueError(f"{field} must be at most {max_length} characters")
+    return value
+
+
+def yaml_document(value: dict[str, object]) -> str:
+    return yaml.safe_dump(value, sort_keys=False, allow_unicode=True).strip()
+
+
 def build_skill_md(name: str, description: str, context: str, source_summary: str) -> str:
+    frontmatter = yaml_document({"name": name, "description": description})
     return f"""---
-name: {name}
-description: {description}
+{frontmatter}
 ---
 
 # Purpose
@@ -130,15 +151,21 @@ Return:
 
 def build_openai_yaml(name: str, description: str) -> str:
     title = title_from_name(name)
-    short = description.replace('"', "'")
-    return f"""interface:
-  display_name: "{title}"
-  short_description: "{short}"
-  default_prompt: "Use ${name} for this task."
-
-policy:
-  allow_implicit_invocation: false
-"""
+    short = description if len(description) <= 64 else f"{description[:61].rstrip()}..."
+    if len(short) < 25:
+        short = f"Use this skill to {short.rstrip('.')}"
+    return yaml.safe_dump(
+        {
+            "interface": {
+                "display_name": title,
+                "short_description": short[:64],
+                "default_prompt": f"Use ${name} for this task.",
+            },
+            "policy": {"allow_implicit_invocation": True},
+        },
+        sort_keys=False,
+        allow_unicode=True,
+    )
 
 
 def create_draft(
@@ -150,24 +177,33 @@ def create_draft(
     context: str,
     source_summary: str,
 ) -> Path:
+    root = root.resolve()
+    if not (root / "catalog" / "tracked_repos.json").is_file():
+        raise ValueError("root must be the skill-library repository root")
     skill_name = normalize_name(name)
+    description = validate_single_line(description, "description", MAX_DESCRIPTION_LENGTH)
+    source_note = validate_single_line(source_note, "source note", 1024)
+    if len(context) > 20_000 or len(source_summary) > 20_000:
+        raise ValueError("context and source summary must each be at most 20000 characters")
     skill_dir = root / "house-skills" / "young" / skill_name
     if skill_dir.exists():
         raise FileExistsError(f"Destination already exists: {skill_dir}")
 
     config = load_lifecycle_config(root)
     ttl = ttl_days if ttl_days is not None else int(config["young"]["default_ttl_days"])
-    now = dt.datetime.now(dt.timezone.utc)
+    if ttl <= 0:
+        raise ValueError("ttl-days must be positive")
+    now = dt.datetime.now(dt.UTC)
     expires_at = now + dt.timedelta(days=ttl)
 
-    write_text(skill_dir / "SKILL.md", build_skill_md(skill_name, description, context, source_summary))
+    write_text(
+        skill_dir / "SKILL.md", build_skill_md(skill_name, description, context, source_summary)
+    )
     write_text(skill_dir / "agents" / "openai.yaml", build_openai_yaml(skill_name, description))
     write_text(
         skill_dir / "references" / "source-notes.md",
         f"# Source Notes\n\n- Reason: {source_note}\n- Created from: local skill consultation gap\n",
     )
-    (skill_dir / "scripts").mkdir(parents=True, exist_ok=True)
-
     metadata = {
         "schema_version": METADATA_SCHEMA_VERSION,
         "version": default_skill_version("young"),

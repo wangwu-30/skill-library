@@ -8,8 +8,13 @@
 !/AGENTS.md
 !/CLAUDE.md
 !/LICENSE
+!/CONTRIBUTING.md
+!/SECURITY.md
+!/uv.lock
 !/pyproject.toml
 !/README.md
+!/.github/
+!/.github/**
 !/.cursor/
 !/.cursor/rules/
 !/.cursor/rules/**
@@ -26,10 +31,14 @@
 !/docs/**
 !/eval/
 !/eval/**
+!/tests/
+!/tests/**
 !/catalog/
 
 /catalog/*
 !/catalog/tracked_repos.json
+!/catalog/tracked_repos.lock.json
+!/catalog/reviewed_core.lock.json
 !/catalog/blacklisted_repos.json
 
 /CATALOG.md
@@ -39,3 +48,9 @@
 
 __pycache__/
 *.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+.skill-library.lock

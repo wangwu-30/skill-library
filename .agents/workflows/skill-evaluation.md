@@ -25,7 +25,7 @@ Use this workflow when you need evidence that a house skill is actually good, no
 8. If the evaluation changes house-skill files, run:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/audit_house_skills.py --root "$PWD"
+uv run --frozen python house-skills/core/skill-librarian/scripts/audit_house_skills.py --root "$PWD"
 ```
 
 ## Done Criteria

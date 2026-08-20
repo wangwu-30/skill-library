@@ -57,7 +57,7 @@ Do not embed tracking commands or telemetry instructions inside skill content.
 - Minor: backward-compatible workflow additions, clearer guardrails, or extra validation that does not break expected outputs.
 - Major: breaking trigger changes, output-contract changes, or validation requirements that would surprise an agent using the previous version.
 - When rollback value matters, archive the replaced version instead of silently erasing it.
-- Prefer `python3 house-skills/core/skill-librarian/scripts/bump_house_skill_version.py --root "$PWD" --skill-path <path> --bump <patch|minor|major> --snapshot-current` when changing house-skill versions.
+- Prefer `uv run --frozen python house-skills/core/skill-librarian/scripts/bump_house_skill_version.py --root "$PWD" --skill-path <path> --bump <patch|minor|major> --snapshot-current` when changing house-skill versions.
 
 ## Usage Tracking Modes
 

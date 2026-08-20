@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $skill-librarian to search the local skill catalog, refresh tracked repositories, triage a skill repository, or review house-skill lifecycle decisions."
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

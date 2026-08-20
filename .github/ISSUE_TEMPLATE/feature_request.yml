@@ -1,0 +1,43 @@
+name: Feature request
+description: Propose a scoped improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User outcome
+      description: What should a user be able to accomplish?
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current limitation
+      description: What fails or is unnecessarily difficult today?
+    validations:
+      required: true
+  - type: dropdown
+    id: trust
+    attributes:
+      label: Trust-boundary impact
+      options:
+        - No trust-boundary change
+        - Changes reviewed-core selection
+        - Changes write or execution permissions
+        - Changes upstream source handling
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: Include alternatives and compatibility implications if known.
+  - type: textarea
+    id: validation
+    attributes:
+      label: Acceptance criteria
+      description: Describe observable tests or documentation outcomes.
+    validations:
+      required: true

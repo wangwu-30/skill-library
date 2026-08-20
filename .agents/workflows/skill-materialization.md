@@ -7,7 +7,7 @@ Use this workflow after a consultation has already concluded that a skill should
 - the consultation output
 - supporting evidence
 - the target skill name or target existing skill
-- target stage, usually `young`
+- target lifecycle stage: `young` for every new draft, or the existing stage when updating an existing skill
 
 ## Workflow
 
@@ -24,11 +24,12 @@ Use this workflow after a consultation has already concluded that a skill should
 7. If `house-skills/` changed, run:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/audit_house_skills.py --root "$PWD"
+uv run --frozen python house-skills/core/skill-librarian/scripts/audit_house_skills.py --root "$PWD"
 ```
 
 8. Report:
    what was materialized, what remains unevaluated, and what evidence justified the change.
+   Do not combine materialization with promotion; entry into `core` requires a separate explicit review and lifecycle action.
 
 ## Done Criteria
 

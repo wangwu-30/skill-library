@@ -1,94 +1,40 @@
 # Delivery Goal
 
-The project should become a live skill librarian agent.
+The project is a production-oriented skill control plane with one conservative runtime boundary.
 
-The core job is simple:
+## Required Outcomes
 
-1. keep syncing and indexing good public skill sources
-2. keep local house skills organized through their full lifecycle
-3. provide skill consultation to other agents for a target scenario
-4. provide or scaffold a skill when a matching one does not exist
-5. support multi-version skill experiments before promotion
+1. A fresh clone installs reproducibly with Python 3.11+ and `uv sync --frozen`.
+2. Local house skills can be cataloged and audited without downloading upstream repositories.
+3. The default MCP server returns only explicitly promoted `core` skills whose deterministic payload SHA-256 matches `catalog/reviewed_core.lock.json`, and performs no caller-triggered writes.
+4. Upstream repositories and `young` drafts remain reference-only. Conversion only creates `young`; explicit promotion plus code-reviewed payload-hash approval is required for `reviewed-core` status.
+5. Scheduled maintenance produces machine-readable status and makes one-shot refresh failures observable through a nonzero exit.
+6. Lifecycle changes preserve provenance and require review rather than relying on usage counts alone.
 
-## Target Shape
-
-The system has three layers.
+## System Boundary
 
 ```text
 host agent
-  decides what scenario needs a skill
-  sends one task intent and uses the returned skill
-
-MCP server
-  exposes one agent-facing intent tool
-  hides search, draft, usage, and lifecycle machinery
-
-deterministic scripts
-  sync tracked repositories
-  rebuild catalog
-  scaffold drafts
-  record usage
-  review lifecycle state
-  promote/archive/experiment with explicit calls
+  sends a bounded task intent
+        |
+        v
+read-only MCP server (default)
+  selects hash-approved house-skills/core content only
+        |
+        v
+generated local catalog
+  includes reviewed core plus reference-only young/upstream metadata
 ```
 
-## Live Agent
+Upstream source trees are optional, ignored local inputs. Indexing is not execution, endorsement, or relicensing. See [the charter](skill-control-plane-charter.md) and [bootstrap policy](upstream-bootstrap.md).
 
-The live agent is the scheduled maintenance loop.
+## Operational Definition of Done
 
-It should:
+- setup and smoke commands work from a clean clone using the lockfile;
+- MCP results cannot escape `house-skills/core/` in default mode;
+- audit and test commands pass;
+- generated files remain local and are treated as potentially sensitive operational output;
+- automation checks process exit status and report fields;
+- documentation distinguishes implemented behavior from roadmap ideas.
 
-- refresh tracked sources when requested
-- rebuild the generated catalog
-- run house-skill and tracked-repo audits
-- review young skills for keep/promote/archive candidates
-- write machine-readable reports
-- avoid applying destructive lifecycle changes unless explicitly requested
-
-The live loop should be runnable from cron, launchd, Codex automation, or a long-running local process.
-
-## Consultation
-
-For a target scenario, the host agent should be able to ask:
-
-- here is what I am trying to do; give me the skill I should use
-
-The skill librarian then decides internally:
-
-- whether an existing skill is strong enough
-- whether usage should be recorded
-- whether a temporary `house-skills/young` skill should be created
-- which nearby examples are useful as source material
-
-If a strong skill exists, the system returns it. If no skill exists, the system creates a controlled
-temporary skill draft and returns that. The host agent should not need to understand the catalog or
-lifecycle internals.
-
-## Lifecycle
-
-House skills move through:
-
-- `young`: new, experimental, or recently converted
-- `core`: proven, stable, repeatedly useful
-- `archive`: stale, replaced, expired, or low-value
-
-Lifecycle movement should be evidence-led. Usage counts alone are not enough for promotion, but they are useful signals.
-
-Default behavior:
-
-- review and recommend
-- apply only on explicit tool call or user/agent decision
-
-## Multi-Version Experiments
-
-Skill experiments should not overwrite a working skill.
-
-Instead:
-
-1. fork the base skill into a `young` variant
-2. preserve lineage in `metadata.json`
-3. mark the variant as an experiment
-4. run it in real tasks
-5. promote, merge, or archive later
-
-This keeps experimentation cheap without making the library unstable.
+Possible future features, including hosted transport or richer ranking, are not current operating promises.

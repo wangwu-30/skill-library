@@ -14,7 +14,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from skill_library_utils import locate_library_root
+from skill_library_utils import ensure_within_root, locate_library_root
 
 
 def parse_args() -> argparse.Namespace:
@@ -42,16 +42,29 @@ def parse_args() -> argparse.Namespace:
 
 def resolve_skill(root: Path, identifier: str) -> Path | None:
     """Resolve a skill identifier to its directory."""
+    if not identifier or "\x00" in identifier:
+        return None
+    house_root = (root / "house-skills").resolve()
     # Try direct path first
-    direct = root / identifier
-    if direct.exists() and (direct / "SKILL.md").exists():
-        return direct.resolve()
+    try:
+        direct = ensure_within_root(root / identifier, house_root, label="skill identifier")
+    except ValueError:
+        direct = None
+    if direct is not None and direct.exists() and (direct / "SKILL.md").is_file():
+        return direct
 
     # Try as a relative path under house-skills/
     for stage in ("core", "young", "archive"):
-        candidate = root / "house-skills" / stage / identifier
-        if candidate.exists() and (candidate / "SKILL.md").exists():
-            return candidate.resolve()
+        try:
+            candidate = ensure_within_root(
+                root / "house-skills" / stage / identifier,
+                root / "house-skills" / stage,
+                label="skill identifier",
+            )
+        except ValueError:
+            continue
+        if candidate.exists() and (candidate / "SKILL.md").is_file():
+            return candidate
 
     # Try catalog search by exact name match
     catalog_path = root / "catalog" / "skill_catalog.json"
@@ -61,9 +74,14 @@ def resolve_skill(root: Path, identifier: str) -> Path | None:
             if entry.get("name") == identifier:
                 skill_root = entry.get("skill_root_path", "")
                 if skill_root:
-                    candidate = root / skill_root
-                    if candidate.exists() and (candidate / "SKILL.md").exists():
-                        return candidate.resolve()
+                    try:
+                        candidate = ensure_within_root(
+                            root / skill_root, house_root, label="catalog skill path"
+                        )
+                    except ValueError:
+                        continue
+                    if candidate.exists() and (candidate / "SKILL.md").is_file():
+                        return candidate
 
     return None
 
@@ -101,7 +119,7 @@ def main() -> int:
             f"error: skill not found: {args.identifier}\n"
             f"hint: run search first:\n"
             f"  python3 house-skills/core/skill-librarian/scripts/search_skill_catalog.py "
-            f"--root {root} --query \"{args.identifier}\"",
+            f'--root {root} --query "{args.identifier}"',
             file=sys.stderr,
         )
         return 1

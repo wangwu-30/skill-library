@@ -8,8 +8,9 @@ from pathlib import Path
 
 from skill_library_utils import (
     bump_semver,
-    iso_now,
+    ensure_within_root,
     is_semver,
+    iso_now,
     locate_library_root,
     parse_semver,
     read_json,
@@ -59,9 +60,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def resolve_skill_path(root: Path, skill_path: Path) -> Path:
-    if skill_path.is_absolute():
-        return skill_path.resolve()
-    return (root / skill_path).resolve()
+    candidate = skill_path if skill_path.is_absolute() else root / skill_path
+    return ensure_within_root(candidate, root / "house-skills", label="skill path")
 
 
 def snapshot_destination(root: Path, skill_dir: Path, version: str) -> Path:
@@ -70,12 +70,12 @@ def snapshot_destination(root: Path, skill_dir: Path, version: str) -> Path:
     candidate = archive_root / f"{skill_dir.name}-v{suffix}"
     if not candidate.exists():
         return candidate
-    return archive_root / f"{skill_dir.name}-v{suffix}-{iso_now().replace(':', '').replace('+', '_')}"
+    return (
+        archive_root / f"{skill_dir.name}-v{suffix}-{iso_now().replace(':', '').replace('+', '_')}"
+    )
 
 
-def compatibility_value(
-    old_version: str, new_version: str, mode: str
-) -> dict[str, bool | str]:
+def compatibility_value(old_version: str, new_version: str, mode: str) -> dict[str, bool | str]:
     if mode == "backward-compatible":
         backward_compatible = True
     elif mode == "breaking":

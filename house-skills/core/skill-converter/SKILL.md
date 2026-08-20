@@ -20,7 +20,7 @@ Use this skill when one or more of these are true:
 
 Do not use this skill for library search, refresh, or lifecycle triage. Hand that work to `$skill-librarian`.
 
-Do not use this skill to compress or refactor an existing house skill. Hand that work to `$perfect-skill-template`.
+Do not use this skill to compress or refactor an existing house skill. Handle that as direct skill-authoring work after reviewing the local skill-authoring conventions.
 
 ## Inputs
 
@@ -39,11 +39,11 @@ If any of these are missing, infer the smallest safe subset and state the assump
 3. Keep only the operating instructions, references, and scripts needed for repeated local use.
 4. Rewrite the frontmatter description so another agent can discover the skill by task words, artifacts, and constraints.
 5. Preserve attribution in the `## Sources` section and in `references/source-notes.md`.
-6. Put new converted skills in `house-skills/young` first unless the user explicitly asks for a stable core skill.
+6. Put every newly converted skill in `house-skills/young`. The converter never writes directly to `core`, even when the requested end state is stable; explicit review and lifecycle promotion happen separately.
 7. If you are creating a new normalized skill, scaffold it with:
 
 ```bash
-python3 house-skills/core/skill-converter/scripts/init_converted_skill.py \
+uv run --frozen python house-skills/core/skill-converter/scripts/init_converted_skill.py \
   --name "<skill-name>" \
   --description "<trigger description>" \
   --source-repo "<repo-url>" \
@@ -62,7 +62,7 @@ Return:
 1. the normalized house skill path
 2. what was preserved from upstream
 3. what was intentionally removed or externalized
-4. its lifecycle stage, usually `young`
+4. its lifecycle stage, always `young` at conversion time
 5. any remaining gaps or follow-up work
 
 ## Validation
@@ -72,6 +72,7 @@ Return:
 - Confirm attribution is preserved.
 - Confirm the normalized skill can be understood without reading the upstream repository first.
 - Confirm the result is actually a conversion from external source material, not a refactor of an existing house skill.
+- Confirm the result is under `house-skills/young`; do not use conversion as an implicit promotion path.
 
 ## Sources
 

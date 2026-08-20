@@ -4,12 +4,13 @@
       "command": "uv",
       "args": [
         "run",
-        "--with",
-        "mcp",
+        "--frozen",
+        "--project",
+        "/absolute/path/to/skill-library",
         "python",
-        "/path/to/skills/house-skills/core/skill-librarian/scripts/skill_mcp_server.py",
+        "/absolute/path/to/skill-library/house-skills/core/skill-librarian/scripts/skill_mcp_server.py",
         "--root",
-        "/path/to/skills"
+        "/absolute/path/to/skill-library"
       ]
     }
   }

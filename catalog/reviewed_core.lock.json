@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "skills": [
+    {
+      "path": "house-skills/core/skill-converter",
+      "content_sha256": "772ed3c34fe8f837687dbd99ade5be5026dce24cfc06b2c31201eec8917bcdac"
+    },
+    {
+      "path": "house-skills/core/skill-librarian",
+      "content_sha256": "b3a90f49c6213c352e46f08707f90cd1602c60c5bb2ce2992103ad37012a865b"
+    }
+  ]
+}

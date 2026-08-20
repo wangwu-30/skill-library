@@ -21,7 +21,9 @@ from skill_library_utils import (
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Fork a house skill into a young experiment variant.")
+    parser = argparse.ArgumentParser(
+        description="Fork a house skill into a young experiment variant."
+    )
     parser.add_argument("--root", type=Path, default=None, help="Skill library root")
     parser.add_argument("--base", required=True, help="Base skill name or path")
     parser.add_argument("--variant", required=True, help="Experiment variant label")

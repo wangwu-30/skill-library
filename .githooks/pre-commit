@@ -5,5 +5,11 @@ set -eu
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
-python3 house-skills/core/skill-librarian/scripts/audit_house_skills.py --root "$repo_root"
-python3 house-skills/core/skill-librarian/scripts/audit_tracked_repos.py --root "$repo_root"
+uv sync --frozen --all-groups
+uv run --frozen ruff check .
+uv run --frozen ruff format --check .
+uv run --frozen pytest --cov --cov-report=term-missing
+uv run --frozen python house-skills/core/skill-librarian/scripts/build_skill_catalog.py --root "$repo_root"
+uv run --frozen python house-skills/core/skill-librarian/scripts/audit_house_skills.py --root "$repo_root"
+uv run --frozen python house-skills/core/skill-librarian/scripts/audit_tracked_repos.py --root "$repo_root"
+uv run --frozen pip-audit --cache-dir "${TMPDIR:-/tmp}/skill-library-pip-audit-cache"

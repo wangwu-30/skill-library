@@ -81,9 +81,7 @@ def review_young_skills(
 ) -> tuple[list[dict], dict]:
     lifecycle_config = load_lifecycle_config(root)
     ttl_days = (
-        ttl_days
-        if ttl_days is not None
-        else int(lifecycle_config["young"]["default_ttl_days"])
+        ttl_days if ttl_days is not None else int(lifecycle_config["young"]["default_ttl_days"])
     )
     promote_min_uses = (
         promote_min_uses

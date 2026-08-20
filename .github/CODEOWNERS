@@ -1,0 +1,10 @@
+# Trust-boundary and governance changes require maintainer review.
+* @wangwu-30
+
+/house-skills/core/ @wangwu-30
+/catalog/tracked_repos.json @wangwu-30
+/catalog/blacklisted_repos.json @wangwu-30
+/catalog/reviewed_core.lock.json @wangwu-30
+/house-skills/core/skill-librarian/scripts/skill_mcp_server.py @wangwu-30
+/docs/skill-control-plane-charter.md @wangwu-30
+/SECURITY.md @wangwu-30

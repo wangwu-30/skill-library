@@ -23,7 +23,7 @@ Use this skill when one or more of these are true:
 
 Do not use this skill to rewrite a specific upstream skill into house format. Hand that work to `$skill-converter`.
 
-Do not use this skill to compress or tighten an existing house skill body. Hand that work to `$perfect-skill-template`.
+Do not use this skill to compress or tighten an existing house skill body. Handle that as direct skill-authoring work after reviewing the local skill-authoring conventions.
 
 ## Inputs
 
@@ -46,47 +46,54 @@ If the catalog or generated summaries are stale for the requested task, rebuild 
    for recommendations, search the catalog first:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/search_skill_catalog.py --root "$PWD" --query "<task keywords>"
+uv run --frozen python house-skills/core/skill-librarian/scripts/search_skill_catalog.py --root "$PWD" --query "<task keywords>"
 ```
 
-5. Refresh only when needed:
-   if the user wants tracked repositories refreshed first, prefer the deterministic path:
+5. Verify or synchronize only when needed:
+   without `--sync`, verify already-materialized repositories against their locked URLs and SHAs. This mode does not clone, fetch, or check out and exits nonzero when a mirror is missing or mismatched:
 
 ```bash
-uv run house-skills/core/skill-librarian/scripts/refresh_tracked_repos.py --root "$PWD"
+uv run --frozen python house-skills/core/skill-librarian/scripts/refresh_tracked_repos.py --root "$PWD"
+```
+
+   For first materialization or explicit restoration to the locked commits, add `--sync`.
+
+```bash
+uv run --frozen python house-skills/core/skill-librarian/scripts/refresh_tracked_repos.py --root "$PWD" --sync
 ```
 
 6. Rebuild generated views when inputs changed:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/build_skill_catalog.py --root "$PWD"
+uv run --frozen python house-skills/core/skill-librarian/scripts/build_skill_catalog.py --root "$PWD"
 ```
 
 7. Audit the tracked list when it changes:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/audit_tracked_repos.py --root "$PWD"
+uv run --frozen python house-skills/core/skill-librarian/scripts/audit_tracked_repos.py --root "$PWD"
 ```
 
 8. For recurring operational maintenance, prefer the single-entry daily flow:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/live_skill_agent.py --root "$PWD" --pull
+uv run --frozen python house-skills/core/skill-librarian/scripts/live_skill_agent.py --root "$PWD" --pull
 ```
 
 9. Apply repository triage rules:
    identify whether a repository is an official library, aggregator, curated list, reference spec, or domain library, then say whether it should be mirrored, indexed, or partially converted.
 10. Apply recommendation rules:
-   prefer `house-skills/core`, then `house-skills/young`, then upstream mirrors. Return the smallest set of high-fit options instead of long dumps.
+   prefer catalog entries marked `reviewed-core` for execution. Treat hash-mismatched or unlisted core skills, `house-skills/young`, and upstream mirrors as reference-only. Return the smallest set of high-fit options instead of long dumps.
 11. Apply lifecycle rules:
    review `young` skills using actual reuse evidence and policy thresholds before proposing promotion or archival.
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/gc_young_skills.py --root "$PWD"
+uv run --frozen python house-skills/core/skill-librarian/scripts/gc_young_skills.py --root "$PWD"
 ```
 
 12. Keep telemetry out of skill bodies:
     retrieval counting belongs in the managing agent layer, not inside `SKILL.md`.
+13. When operating the MCP entrypoint, retain stdio as the default and use standard Streamable HTTP only on loopback. Streamable HTTP is deliberately stateless; select JSON or SSE POST responses according to the client. Keep write mode off, and use an SSH tunnel or same-host TLS/authenticating reverse proxy for remote access. Treat `--auth-token-env` as a pre-shared-token gate, not OAuth.
 
 ## Output Contract
 
@@ -104,6 +111,8 @@ Return:
 - Do not report remote-derived recommendations when upstream refresh failed or was not verified.
 - Only claim that `memory.md` or another output file was updated if it actually changed.
 - Promotion to `core` should require repeated successful reuse, not aesthetic preference.
+- Promotion is not runtime approval. After reviewing a promoted skill's complete payload, a code owner must update its deterministic SHA-256 in `catalog/reviewed_core.lock.json`; only an exact match receives catalog and MCP `reviewed-core` status.
+- Verify MCP changes with a real client handshake and `tools/list` plus `tools/call`; an HTTP status-only check is insufficient.
 - If a task requires rewriting a skill body rather than operating the library, hand off to the correct authoring skill.
 
 ## Sources

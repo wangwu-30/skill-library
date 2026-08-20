@@ -33,7 +33,7 @@ Do not use this template before the consultation decision is explicit.
 - consultation summary
 - decision type: `create draft` or `update existing`
 - evidence that justified the decision
-- target stage, usually `young`
+- target lifecycle stage: `young` for every new draft, or the existing stage for an update
 - the smallest reusable unit being materialized
 
 ## Materialization Record
@@ -150,7 +150,7 @@ Materializing a draft does not imply:
 - external exposure
 - stable public API
 
-The draft starts as evidence-backed `young` inventory, not as a final answer.
+The draft starts as evidence-backed `young` inventory, not as a final answer. Promotion into `core` is a separate explicit review and lifecycle action; reviewed-core runtime approval is separately gated by the matching payload hash in `catalog/reviewed_core.lock.json`.
 
 ## Anti-Patterns
 

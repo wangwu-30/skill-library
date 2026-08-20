@@ -19,13 +19,13 @@ Read in this order before doing substantial work:
 
 1. [README.md](README.md)
 2. [docs/skill-control-plane-charter.md](docs/skill-control-plane-charter.md)
-3. [CATALOG.md](CATALOG.md)
+3. [CONTRIBUTING.md](CONTRIBUTING.md) when changing the repository
 4. [house-skills/README.md](house-skills/README.md)
 5. the relevant house skill under `house-skills/core` or `house-skills/young`
 6. the relevant decision template under `docs/` if the task is consultation or materialization
 7. the workflow file in `.agents/workflows/` if the task matches it
 
-For current run facts, prefer `CATALOG.md` and `memory.md` over assumptions.
+`CATALOG.md` and `memory.md` are ignored outputs that do not exist in a fresh clone. Generate them with the documented maintenance commands before using them as current-run evidence.
 
 ## IDE Adapter Policy
 
@@ -36,6 +36,7 @@ If this repo also exposes `AGENTS.md`, `CLAUDE.md`, or Cursor rule files, treat 
 ## Repo Map
 
 - `catalog/tracked_repos.json`: source of truth for tracked upstream repositories
+- `catalog/reviewed_core.lock.json`: code-reviewed deterministic payload hashes for promoted core skills
 - `catalog/blacklisted_repos.json`: repositories intentionally excluded from the tracked list so they are not reintroduced casually
 - `catalog/skill_catalog.json`: generated machine-readable index of discovered skills
 - `CATALOG.md`: generated human-readable summary of the indexed library
@@ -44,7 +45,7 @@ If this repo also exposes `AGENTS.md`, `CLAUDE.md`, or Cursor rule files, treat 
 - `docs/skill-consultation-decision-template.md`: internal decision template for reuse, update, draft, or no-skill-needed
 - `docs/skill-draft-materialization-template.md`: bounded template for turning a consultation decision into a controlled repo change
 - `eval/`: trigger and output evaluation assets for skill quality
-- `house-skills/core/`: stable house skills that should be preferred
+- `house-skills/core/`: explicitly promoted house skills; only payloads matching `catalog/reviewed_core.lock.json` are runtime-trusted
 - `house-skills/young/`: trial house skills under TTL and promotion review
 - `house-skills/archive/`: expired or replaced house skills kept for provenance
 - `house-skills/config/lifecycle.json`: shared lifecycle thresholds
@@ -57,13 +58,15 @@ If this repo also exposes `AGENTS.md`, `CLAUDE.md`, or Cursor rule files, treat 
 Search before you create:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/search_skill_catalog.py --root "$PWD" --query "<keywords>"
+uv sync --frozen
+uv run --frozen python house-skills/core/skill-librarian/scripts/build_skill_catalog.py --root "$PWD"
+uv run --frozen python house-skills/core/skill-librarian/scripts/search_skill_catalog.py --root "$PWD" --query "<keywords>"
 ```
 
 Consult a house skill through the CLI runtime (records usage automatically):
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/skill_consult.py --root "$PWD" <skill-name>
+uv run --frozen python house-skills/core/skill-librarian/scripts/skill_consult.py --root "$PWD" <skill-name>
 ```
 
 For control-plane work, start from the charter and matching workflow:
@@ -75,31 +78,37 @@ For control-plane work, start from the charter and matching workflow:
 Rebuild the catalog when repository contents change:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/build_skill_catalog.py --root "$PWD"
+uv run --frozen python house-skills/core/skill-librarian/scripts/build_skill_catalog.py --root "$PWD"
 ```
 
-Refresh tracked repositories when the task actually requires upstream updates:
+Verify that already-materialized tracked repositories match their reviewed pins:
 
 ```bash
-uv run house-skills/core/skill-librarian/scripts/refresh_tracked_repos.py --root "$PWD"
+uv run --frozen python house-skills/core/skill-librarian/scripts/refresh_tracked_repos.py --root "$PWD"
+```
+
+The no-argument mode does not clone, fetch, or check out repositories. It exits nonzero when a configured mirror is missing or does not match its pin. First materialization or restoration is an explicit write operation and requires:
+
+```bash
+uv run --frozen python house-skills/core/skill-librarian/scripts/refresh_tracked_repos.py --root "$PWD" --sync
 ```
 
 Run the deterministic daily maintenance flow when the request is operational rather than ad hoc:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/live_skill_agent.py --root "$PWD" --pull
+uv run --frozen python house-skills/core/skill-librarian/scripts/live_skill_agent.py --root "$PWD" --pull
 ```
 
 Audit house-skill integrity after changing `house-skills/`:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/audit_house_skills.py --root "$PWD"
+uv run --frozen python house-skills/core/skill-librarian/scripts/audit_house_skills.py --root "$PWD"
 ```
 
 Audit tracked repository integrity after changing `catalog/tracked_repos.json`:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/audit_tracked_repos.py --root "$PWD"
+uv run --frozen python house-skills/core/skill-librarian/scripts/audit_tracked_repos.py --root "$PWD"
 ```
 
 Install repo-tracked git hooks once per clone:
@@ -158,8 +167,9 @@ Not acceptable:
 
 ## House Skill Rules
 
-- Prefer `house-skills/core` over `young` when both fit.
-- New house skills start in `house-skills/young` unless the user explicitly asks otherwise.
+- Prefer hash-approved `house-skills/core` content over `young` when both fit; treat unlisted or hash-mismatched core payloads as reference-only.
+- New house skills always start in `house-skills/young`; entry into `core` requires a separate explicit review and promotion.
+- Conversion always produces a `young` skill. A request for a stable skill does not bypass evaluation and explicit promotion.
 - Keep `SKILL.md` focused on execution contract: trigger, inputs, workflow, output, validation, sources.
 - Move long detail into `references/`.
 - Add `scripts/` only when deterministic execution matters.
@@ -174,6 +184,7 @@ Not acceptable:
 - Consultation should produce exactly one decision: `reuse existing`, `update existing`, `create draft`, or `no skill needed`.
 - Materialization should follow an explicit consultation decision; do not jump straight from vague need to new skill files.
 - Seeded evaluation examples are useful, but they are not authoritative promotion evidence by themselves.
+- Promotion moves an approved candidate into `core`; it does not make the payload `reviewed-core`. After reviewing the complete payload, update `catalog/reviewed_core.lock.json` with its deterministic SHA-256 through code-owner review. The hash recursively covers payload files, including `SKILL.md`, `agents/`, `references/`, `scripts/`, and `assets/`, excludes mutable `metadata.json`, `__pycache__/`, and `.pyc` files, and rejects symbolic links. Only an exact hash match is eligible for catalog and MCP `reviewed-core` status.
 
 ## Repo Development Skills
 
@@ -181,10 +192,7 @@ Use only the smallest set of house skills that materially improve the task:
 
 - `skill-librarian`: search, index, recommend, refresh, and lifecycle-manage the library
 - `skill-converter`: normalize external skills into house format
-- `perfect-skill-template`: compress a draft or bloated skill into a minimal execution contract
-- `project-agent-bootstrap`: update this repository's own agent entrypoint or maintenance workflow when the operating model drifts
-
-If none fit cleanly, create a new `young` house skill instead of overloading an existing one.
+If neither fits cleanly, follow the consultation workflow before creating a new `young` house skill instead of overloading an existing one.
 
 ## Reporting Contract
 

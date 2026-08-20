@@ -1,10 +1,87 @@
 [project]
 name = "skill-library"
-version = "0.1.0"
-description = "A local skill library with an MCP-facing agent librarian."
+version = "1.0.0"
+description = "A security-conscious local skill catalog with an MCP-facing agent librarian."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 dependencies = [
-  "mcp>=1.27.1"
+  "filelock==3.20.3",
+  "mcp==1.28.1",
+  # 2.15.0 emits an upstream incomplete FastMCP lifespan annotation warning.
+  "pydantic-settings==2.14.2",
+  "PyYAML==6.0.3",
+  "starlette==1.6.0",
+  "uvicorn==0.52.4",
 ]
+
+[dependency-groups]
+dev = [
+  "httpx==0.28.1",
+  "pip-audit==2.10.0",
+  "pytest==9.0.3",
+  "pytest-cov==7.0.0",
+  "ruff==0.15.6",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers -ra"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = [
+  "house-skills/core/skill-converter/scripts",
+  "house-skills/core/skill-librarian/scripts",
+]
+omit = [
+  "*/audit_tracked_repos.py",
+  "*/bump_house_skill_version.py",
+  "*/create_skill_experiment.py",
+  "*/daily_skill_watch.py",
+  "*/gc_young_skills.py",
+  "*/hash_core_skill.py",
+  "*/live_skill_agent.py",
+  "*/record_skill_usage.py",
+  "*/search_skill_catalog.py",
+  "*/skill_consult.py",
+  "*/skill_lifecycle_action.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 60
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = [
+  "anthropics-skills",
+  "openai-skills",
+  "vercel-labs-agent-skills",
+  "sickn33-antigravity-awesome-skills",
+  "wshobson-agents",
+  "alirezarezvani-claude-skills",
+  "composio-awesome-claude-skills",
+  "levnikolaevich-claude-code-skills",
+  "agentskills-spec",
+  "obra-superpowers",
+  "jezweb-claude-skills",
+  "lackeyjb-playwright-skill",
+  "timescale-pg-aiguide",
+  "zxkane-aws-skills",
+  "conorluddy-ios-simulator-skill",
+  "pleaseprompto-notebooklm-skill",
+  "gl0bal01-malware-analysis-claude-skills",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"

@@ -23,7 +23,7 @@ Use this workflow when a request raises the question:
 3. Search the catalog before proposing any new draft:
 
 ```bash
-python3 house-skills/core/skill-librarian/scripts/search_skill_catalog.py --root "$PWD" --query "<keywords>"
+uv run --frozen python house-skills/core/skill-librarian/scripts/search_skill_catalog.py --root "$PWD" --query "<keywords>"
 ```
 
 4. Review the best current fit:
@@ -31,7 +31,7 @@ python3 house-skills/core/skill-librarian/scripts/search_skill_catalog.py --root
    Consult a house skill through the runtime to load its body and record usage:
 
    ```bash
-   python3 house-skills/core/skill-librarian/scripts/skill_consult.py --root "$PWD" <skill-name>
+   uv run --frozen python house-skills/core/skill-librarian/scripts/skill_consult.py --root "$PWD" <skill-name>
    ```
 5. Run the gap assessment:
    identify whether the missing behavior is central, repeated, and distinct enough to justify maintenance.

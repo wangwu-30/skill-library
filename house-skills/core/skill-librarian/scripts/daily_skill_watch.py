@@ -8,16 +8,25 @@ from pathlib import Path
 from build_skill_catalog import build_catalog, read_tracked_repos, write_catalog, write_markdown
 from gc_young_skills import review_young_skills
 from refresh_tracked_repos import STATUS_FAIL, refresh_repositories, summarize_results
-from skill_library_utils import iso_now, locate_library_root, write_json
+from skill_library_utils import (
+    atomic_write_text,
+    ensure_within_root,
+    iso_now,
+    library_lock,
+    locate_library_root,
+    write_json,
+)
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run deterministic daily skill library maintenance.")
+    parser = argparse.ArgumentParser(
+        description="Run deterministic daily skill library maintenance."
+    )
     parser.add_argument("--root", type=Path, default=None, help="Skill library root")
     parser.add_argument(
         "--pull",
         action="store_true",
-        help="Attempt git pull --ff-only for clean upstream repositories with remotes",
+        help="Clone or restore upstream repositories to their committed lock entries",
     )
     parser.add_argument(
         "--memory-path",
@@ -147,9 +156,7 @@ def render_memory_entry(report: dict) -> str:
 
     failed_refreshes = refresh["failed_refreshes"]
     if failed_refreshes:
-        sample = ", ".join(
-            f"{item['local_dir']}: {item['error']}" for item in failed_refreshes[:3]
-        )
+        sample = ", ".join(f"{item['local_dir']}: {item['error']}" for item in failed_refreshes[:3])
         lines.append(f"- Refresh failures sample: `{sample}`")
 
     lines.extend(["", ""])
@@ -164,7 +171,7 @@ def write_memory(memory_path: Path, report: dict) -> None:
     if not existing:
         existing = "# Skill Library Run Memory\n\n"
 
-    memory_path.write_text(existing + render_memory_entry(report), encoding="utf-8")
+    atomic_write_text(memory_path, existing + render_memory_entry(report))
 
 
 def print_report(report: dict, memory_path: Path, json_path: Path) -> None:
@@ -206,17 +213,24 @@ def print_report(report: dict, memory_path: Path, json_path: Path) -> None:
 def main() -> int:
     args = parse_args()
     root = locate_library_root(args.root, Path(__file__))
-    memory_path = args.memory_path or (root / "memory.md")
-    json_path = args.json_path or (root / "catalog" / "daily_skill_watch_last.json")
+    memory_path = ensure_within_root(
+        args.memory_path or (root / "memory.md"), root, label="memory path"
+    )
+    json_path = ensure_within_root(
+        args.json_path or (root / "catalog" / "daily_skill_watch_last.json"),
+        root,
+        label="JSON report path",
+    )
 
-    report = build_report(root, pull_requested=args.pull)
-    write_memory(memory_path, report)
-    report["memory_written"] = True
-    report["memory_path"] = str(memory_path)
-    report["json_path"] = str(json_path)
-    write_json(json_path, report)
+    with library_lock(root):
+        report = build_report(root, pull_requested=args.pull)
+        write_memory(memory_path, report)
+        report["memory_written"] = True
+        report["memory_path"] = str(memory_path)
+        report["json_path"] = str(json_path)
+        write_json(json_path, report)
     print_report(report, memory_path, json_path)
-    return 0
+    return 0 if report["overall_status"] == "success" else 1
 
 
 if __name__ == "__main__":

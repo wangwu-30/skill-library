@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "repos": [
+    {"id": "anthropics-skills", "repo_url": "https://github.com/anthropics/skills", "commit": "0a64e398ec6bb34a494f0c347e8ccae53a862f8e"},
+    {"id": "openai-skills", "repo_url": "https://github.com/openai/skills", "commit": "49f948faa9258a0c61caceaf225e179651397431"},
+    {"id": "vercel-labs-agent-skills", "repo_url": "https://github.com/vercel-labs/agent-skills", "commit": "b8caa260a420a73042e35521de4b5c8baf6446cc"},
+    {"id": "sickn33-antigravity-awesome-skills", "repo_url": "https://github.com/sickn33/antigravity-awesome-skills", "commit": "b6ceca367a3b3ee90a273a3afa895960e8e9d7a5"},
+    {"id": "wshobson-agents", "repo_url": "https://github.com/wshobson/agents", "commit": "367cb6a4a182cf7e9b0a17c9429f7411ddd9cf35"},
+    {"id": "alirezarezvani-claude-skills", "repo_url": "https://github.com/alirezarezvani/claude-skills", "commit": "aa8d778811a557a2c28ccadda4cf3d0bd028a4cc"},
+    {"id": "composio-awesome-claude-skills", "repo_url": "https://github.com/ComposioHQ/awesome-claude-skills", "commit": "be2a406907dbc61b73e6827ded415c96139d13a2"},
+    {"id": "levnikolaevich-claude-code-skills", "repo_url": "https://github.com/levnikolaevich/claude-code-skills", "commit": "5bf66c501ce09284a211003a6af845d8d1636a5d"},
+    {"id": "agentskills-spec", "repo_url": "https://github.com/agentskills/agentskills", "commit": "69ef37e9424c0a7ea9dd2293b559e43ec8176379"},
+    {"id": "obra-superpowers", "repo_url": "https://github.com/obra/superpowers", "commit": "b36e0829c6d0140e93cfef2ca599b1b07d4a7797"},
+    {"id": "jezweb-claude-skills", "repo_url": "https://github.com/jezweb/claude-skills", "commit": "e875a6bfff809e5d42c584104031e36e1f014f18"},
+    {"id": "lackeyjb-playwright-skill", "repo_url": "https://github.com/lackeyjb/playwright-skill", "commit": "dd47a6a023e249eb1b36e9e943eab89d0900865d"},
+    {"id": "timescale-pg-aiguide", "repo_url": "https://github.com/timescale/pg-aiguide", "commit": "b4f11a45907af3abda0f79e784aff9a6d5eef468"},
+    {"id": "zxkane-aws-skills", "repo_url": "https://github.com/zxkane/aws-skills", "commit": "68530c6f296ccd2f5e99c79782f3e0fbf962c51a"},
+    {"id": "conorluddy-ios-simulator-skill", "repo_url": "https://github.com/conorluddy/ios-simulator-skill", "commit": "e0ee87a884b438632238ef8ab42139797f8638a8"},
+    {"id": "pleaseprompto-notebooklm-skill", "repo_url": "https://github.com/PleasePrompto/notebooklm-skill", "commit": "eea5cb28ba79ab8b078a1eaa44ce9ec44f75dbf8"},
+    {"id": "gl0bal01-malware-analysis-claude-skills", "repo_url": "https://github.com/gl0bal01/malware-analysis-claude-skills", "commit": "09f91e4d69d6d15629b9fa09c889b4b93c02bed5"}
+  ]
+}

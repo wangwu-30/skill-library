@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "version": "1.4.0",
+  "version": "1.4.1",
   "owner": "wangwu",
   "stage": "core",
   "status": "stable",
   "created_at": "2026-04-04T00:00:00+08:00",
-  "updated_at": "2026-08-20T00:00:00+00:00",
+  "updated_at": "2026-08-20T15:46:38.496245+00:00",
   "last_used_at": null,
   "use_count": 0,
   "expires_at": null,
@@ -13,10 +13,15 @@
     "mode": "none"
   },
   "derives_from": null,
-  "replaces": [],
+  "replaces": [
+    {
+      "skill_path": "house-skills/core/skill-librarian",
+      "version": "1.4.0"
+    }
+  ],
   "compatibility": {
     "backward_compatible": true,
-    "notes": ""
+    "notes": "Harden exact MCP Host and Origin allowlists and private atomic file publication."
   },
   "source": {
     "kind": "house",
@@ -24,5 +29,5 @@
     "skill_path": "house-skills/core/skill-librarian",
     "author": "wangwu"
   },
-  "notes": "Version 1.4.0 adds standards-compliant, stateless MCP Streamable HTTP alongside the existing stdio transport. HTTP remains loopback-only, validates Host and Origin, bounds request bodies, supports JSON or SSE POST responses, and requires an environment-sourced Bearer gate before enabling writes. Runtime trust still requires an exact reviewed-core payload hash."
+  "notes": "Version 1.4.1 provides standards-compliant stdio and stateless Streamable HTTP transports. HTTP remains loopback-only, uses exact parsed Host and Origin allowlists, bounds request bodies, supports JSON or SSE POST responses, and requires an environment-sourced Bearer gate before enabling writes. Atomic publications are private by default and preserve only ordinary existing access bits. Runtime trust still requires an exact reviewed-core payload hash."
 }

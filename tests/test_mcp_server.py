@@ -203,10 +203,72 @@ def test_streamable_http_rejects_non_loopback_bind(host: str) -> None:
         server.transport_security(args)
 
 
-@pytest.mark.parametrize("value", ["", " host", "host ", "host\r\nevil", "x" * 513])
-def test_streamable_http_rejects_invalid_header_allowlist(value: str) -> None:
+@pytest.mark.parametrize(
+    "value",
+    [
+        "",
+        " host",
+        "host ",
+        "host\r\nevil",
+        "x" * 513,
+        "*.internal",
+        "mcp.internal:*",
+        "mcp.internal:443.evil",
+        "mcp.internal:evil",
+        "user@mcp.internal",
+        "mcp.internal/path",
+        "::1:8000",
+        "MCP.internal:443",
+        "mcp..internal",
+        "-mcp.internal",
+        "mcp.internal:080",
+        "127.000.000.001:8000",
+    ],
+)
+def test_streamable_http_rejects_invalid_host_allowlist(value: str) -> None:
     with pytest.raises(ValueError, match="invalid allowed host"):
-        server.validate_header_allowlist([value], label="allowed host")
+        server.validate_allowed_hosts([value])
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "https://*.example",
+        "https://client.example:*",
+        "https://client.example/path",
+        "https://client.example?query",
+        "https://user@client.example",
+        "https://client.example:443.evil",
+        "javascript://client.example",
+        "https://client.example/",
+        "HTTPS://client.example",
+        "https://client..example",
+        "https://-client.example",
+        "http://127.000.000.001:8000",
+    ],
+)
+def test_streamable_http_rejects_invalid_origin_allowlist(value: str) -> None:
+    with pytest.raises(ValueError, match="invalid allowed origin"):
+        server.validate_allowed_origins([value])
+
+
+def test_streamable_http_accepts_exact_host_and_origin_allowlist_values() -> None:
+    assert server.validate_allowed_hosts(
+        ["mcp.internal", "mcp.internal:443", "127.0.0.1:8000", "[::1]:8000"]
+    ) == ["mcp.internal", "mcp.internal:443", "127.0.0.1:8000", "[::1]:8000"]
+    assert server.validate_allowed_origins(
+        [
+            "https://client.example",
+            "https://client.example:8443",
+            "http://127.0.0.1:3000",
+            "http://[::1]:3000",
+        ]
+    ) == [
+        "https://client.example",
+        "https://client.example:8443",
+        "http://127.0.0.1:3000",
+        "http://[::1]:3000",
+    ]
 
 
 def test_streamable_http_uses_dns_rebinding_allowlists() -> None:
@@ -224,9 +286,43 @@ def test_streamable_http_uses_dns_rebinding_allowlists() -> None:
     security = server.transport_security(args)
 
     assert security.enable_dns_rebinding_protection
-    assert "127.0.0.1:*" in security.allowed_hosts
-    assert "mcp.internal:443" in security.allowed_hosts
-    assert "https://client.example" in security.allowed_origins
+    assert security.allowed_hosts == [
+        "127.0.0.1:8000",
+        "localhost:8000",
+        "[::1]:8000",
+        "mcp.internal:443",
+    ]
+    assert security.allowed_origins == [
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
+        "http://[::1]:8000",
+        "https://client.example",
+    ]
+    assert not any(value.endswith(":*") for value in security.allowed_hosts)
+    assert not any(value.endswith(":*") for value in security.allowed_origins)
+
+
+def test_streamable_http_port_80_allows_canonical_portless_loopback_values() -> None:
+    args = server.parse_args(["--transport", "streamable-http", "--port", "80"])
+
+    security = server.transport_security(args)
+
+    assert security.allowed_hosts == [
+        "127.0.0.1:80",
+        "localhost:80",
+        "[::1]:80",
+        "127.0.0.1",
+        "localhost",
+        "[::1]",
+    ]
+    assert security.allowed_origins == [
+        "http://127.0.0.1:80",
+        "http://localhost:80",
+        "http://[::1]:80",
+        "http://127.0.0.1",
+        "http://localhost",
+        "http://[::1]",
+    ]
 
 
 def test_streamable_http_bearer_token_comes_from_environment(

@@ -51,7 +51,7 @@ Configure the client endpoint as `http://127.0.0.1:8000/mcp`; [the URL client ex
 The HTTP service always binds to `127.0.0.1`, `localhost`, or `::1`; it refuses `0.0.0.0`, LAN, and public addresses. It also:
 
 - validates `Host` and any supplied `Origin` to resist DNS rebinding;
-- accepts additional trusted values through repeatable `--allowed-host` and `--allowed-origin`;
+- accepts additional exact trusted values through repeatable `--allowed-host` and `--allowed-origin`; wildcard ports and URL paths are rejected;
 - limits each request body to 64 KiB before JSON parsing;
 - ignores proxy-forwarding headers;
 - keeps write mode disabled by default.

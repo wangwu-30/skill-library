@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import ipaddress
 import os
 import re
 import secrets
@@ -11,6 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Literal
+from urllib.parse import urlsplit
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
@@ -43,13 +45,8 @@ DEFAULT_HTTP_HOST = "127.0.0.1"
 DEFAULT_HTTP_PORT = 8000
 DEFAULT_HTTP_PATH = "/mcp"
 LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
-DEFAULT_ALLOWED_HOSTS = ("127.0.0.1:*", "localhost:*", "[::1]:*")
-DEFAULT_ALLOWED_ORIGINS = (
-    "http://127.0.0.1:*",
-    "http://localhost:*",
-    "http://[::1]:*",
-)
 MIN_BEARER_TOKEN_CHARS = 32
+DNS_LABEL_RE = re.compile(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?")
 
 Transport = Literal["stdio", "streamable-http"]
 
@@ -141,19 +138,138 @@ def is_loopback_host(host: str) -> bool:
     return host.lower() in LOOPBACK_HOSTS
 
 
-def validate_header_allowlist(values: list[str], *, label: str) -> list[str]:
+def _validate_allowlist_text(raw_value: str, *, label: str) -> str:
+    if (
+        not isinstance(raw_value, str)
+        or not raw_value
+        or raw_value != raw_value.strip()
+        or len(raw_value) > 512
+        or not raw_value.isascii()
+        or any(character.isspace() for character in raw_value)
+        or any(character in raw_value for character in "*\\%")
+    ):
+        raise ValueError(f"invalid {label}: {raw_value!r}")
+    return raw_value
+
+
+def _canonical_hostname(hostname: str, *, bracketed: bool, label: str) -> str:
+    try:
+        address = ipaddress.ip_address(hostname)
+    except ValueError:
+        if (
+            bracketed
+            or len(hostname) > 253
+            or hostname.endswith(".")
+            or all(character.isdigit() or character == "." for character in hostname)
+            or any(not DNS_LABEL_RE.fullmatch(part) for part in hostname.split("."))
+        ):
+            raise ValueError(f"invalid {label} hostname: {hostname!r}") from None
+        return hostname
+    if isinstance(address, ipaddress.IPv6Address):
+        if not bracketed:
+            raise ValueError(f"invalid {label} hostname: IPv6 addresses must be bracketed")
+        return f"[{address.compressed}]"
+    if bracketed:
+        raise ValueError(f"invalid {label} hostname: only IPv6 addresses may be bracketed")
+    return str(address)
+
+
+def validate_allowed_hosts(values: list[str]) -> list[str]:
+    """Validate exact HTTP Host values without relying on SDK prefix wildcards."""
+
     validated: list[str] = []
     for raw_value in values:
-        value = raw_value.strip()
+        value = _validate_allowlist_text(raw_value, label="allowed host")
+        if any(character in value for character in "/?#@") or value.endswith(":"):
+            raise ValueError(f"invalid allowed host: {raw_value!r}")
+        try:
+            parsed = urlsplit(f"//{value}")
+            port = parsed.port
+            hostname = parsed.hostname
+        except ValueError as exc:
+            raise ValueError(f"invalid allowed host: {raw_value!r}") from exc
         if (
-            not value
-            or value != raw_value
-            or len(value) > 512
-            or any(character in value for character in "\r\n\t")
+            parsed.scheme
+            or parsed.path
+            or parsed.query
+            or parsed.fragment
+            or parsed.username is not None
+            or parsed.password is not None
+            or not hostname
+            or (port is not None and not 1 <= port <= 65_535)
         ):
-            raise ValueError(f"invalid {label}: {raw_value!r}")
+            raise ValueError(f"invalid allowed host: {raw_value!r}")
+        try:
+            canonical_hostname = _canonical_hostname(
+                hostname, bracketed=value.startswith("["), label="allowed host"
+            )
+        except ValueError as exc:
+            raise ValueError(f"invalid allowed host: {raw_value!r}") from exc
+        canonical_authority = canonical_hostname
+        if port is not None:
+            canonical_authority += f":{port}"
+        if value != canonical_authority:
+            raise ValueError(f"invalid allowed host: {raw_value!r}")
         validated.append(value)
     return validated
+
+
+def validate_allowed_origins(values: list[str]) -> list[str]:
+    """Validate exact HTTP(S) origins with no path, credentials, or wildcard port."""
+
+    validated: list[str] = []
+    for raw_value in values:
+        value = _validate_allowlist_text(raw_value, label="allowed origin")
+        try:
+            parsed = urlsplit(value)
+            port = parsed.port
+            hostname = parsed.hostname
+        except ValueError as exc:
+            raise ValueError(f"invalid allowed origin: {raw_value!r}") from exc
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not parsed.netloc
+            or not hostname
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.path
+            or parsed.query
+            or parsed.fragment
+            or parsed.netloc.endswith(":")
+            or (port is not None and not 1 <= port <= 65_535)
+        ):
+            raise ValueError(f"invalid allowed origin: {raw_value!r}")
+        try:
+            canonical_hostname = _canonical_hostname(
+                hostname, bracketed=parsed.netloc.startswith("["), label="allowed origin"
+            )
+        except ValueError as exc:
+            raise ValueError(f"invalid allowed origin: {raw_value!r}") from exc
+        canonical_authority = canonical_hostname
+        if port is not None:
+            canonical_authority += f":{port}"
+        if value != f"{parsed.scheme}://{canonical_authority}":
+            raise ValueError(f"invalid allowed origin: {raw_value!r}")
+        validated.append(value)
+    return validated
+
+
+def default_allowed_hosts(port: int) -> list[str]:
+    hosts = [f"127.0.0.1:{port}", f"localhost:{port}", f"[::1]:{port}"]
+    if port == 80:
+        hosts.extend(["127.0.0.1", "localhost", "[::1]"])
+    return hosts
+
+
+def default_allowed_origins(port: int) -> list[str]:
+    origins = [
+        f"http://127.0.0.1:{port}",
+        f"http://localhost:{port}",
+        f"http://[::1]:{port}",
+    ]
+    if port == 80:
+        origins.extend(["http://127.0.0.1", "http://localhost", "http://[::1]"])
+    return origins
 
 
 def transport_security(args: argparse.Namespace) -> TransportSecuritySettings:
@@ -162,12 +278,12 @@ def transport_security(args: argparse.Namespace) -> TransportSecuritySettings:
             "Streamable HTTP must bind to 127.0.0.1, localhost, or ::1; "
             "use a TLS/authenticating reverse proxy or an SSH tunnel for remote access"
         )
-    hosts = validate_header_allowlist(args.allowed_host, label="allowed host")
-    origins = validate_header_allowlist(args.allowed_origin, label="allowed origin")
+    hosts = validate_allowed_hosts(args.allowed_host)
+    origins = validate_allowed_origins(args.allowed_origin)
     return TransportSecuritySettings(
         enable_dns_rebinding_protection=True,
-        allowed_hosts=list(dict.fromkeys([*DEFAULT_ALLOWED_HOSTS, *hosts])),
-        allowed_origins=list(dict.fromkeys([*DEFAULT_ALLOWED_ORIGINS, *origins])),
+        allowed_hosts=list(dict.fromkeys([*default_allowed_hosts(args.port), *hosts])),
+        allowed_origins=list(dict.fromkeys([*default_allowed_origins(args.port), *origins])),
     )
 
 

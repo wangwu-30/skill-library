@@ -145,6 +145,24 @@ async def test_streamable_http_security_and_request_limits() -> None:
                 "host": "attacker.example",
             },
         )
+        deceptive_host = await client.post(
+            "/mcp",
+            json=initialize,
+            headers={
+                **common_headers,
+                "authorization": f"Bearer {token}",
+                "host": "127.0.0.1:8000.evil",
+            },
+        )
+        credential_like_host = await client.post(
+            "/mcp",
+            json=initialize,
+            headers={
+                **common_headers,
+                "authorization": f"Bearer {token}",
+                "host": "127.0.0.1:@evil",
+            },
+        )
         wrong_origin = await client.post(
             "/mcp",
             json=initialize,
@@ -152,6 +170,24 @@ async def test_streamable_http_security_and_request_limits() -> None:
                 **common_headers,
                 "authorization": f"Bearer {token}",
                 "origin": "https://attacker.example",
+            },
+        )
+        deceptive_origin = await client.post(
+            "/mcp",
+            json=initialize,
+            headers={
+                **common_headers,
+                "authorization": f"Bearer {token}",
+                "origin": "http://127.0.0.1:8000.evil",
+            },
+        )
+        path_origin = await client.post(
+            "/mcp",
+            json=initialize,
+            headers={
+                **common_headers,
+                "authorization": f"Bearer {token}",
+                "origin": "http://127.0.0.1:8000/path",
             },
         )
         oversized = await client.post(
@@ -186,7 +222,11 @@ async def test_streamable_http_security_and_request_limits() -> None:
     assert unauthenticated_get.status_code == 401
     assert unauthenticated_delete.status_code == 401
     assert wrong_host.status_code == 421
+    assert deceptive_host.status_code == 421
+    assert credential_like_host.status_code == 421
     assert wrong_origin.status_code == 403
+    assert deceptive_origin.status_code == 403
+    assert path_origin.status_code == 403
     assert oversized.status_code == 413
     assert wrong_content_type.status_code == 400
     assert accepted.status_code == 200

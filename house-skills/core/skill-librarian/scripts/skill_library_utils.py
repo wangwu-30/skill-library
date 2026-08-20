@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -220,10 +221,17 @@ def write_json(path: Path, data: dict) -> None:
 def atomic_write_text(path: Path, content: str, *, encoding: str = "utf-8") -> None:
     """Publish a complete file atomically in the destination directory."""
 
-    if path.is_symlink():
-        raise ValueError(f"refusing to replace symlink: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
-    existing_mode = path.stat().st_mode & 0o777 if path.exists() else 0o644
+    try:
+        destination_stat = path.lstat()
+    except FileNotFoundError:
+        publish_mode = 0o600
+    else:
+        if stat.S_ISLNK(destination_stat.st_mode):
+            raise ValueError(f"refusing to replace symlink: {path}")
+        if not stat.S_ISREG(destination_stat.st_mode):
+            raise ValueError(f"refusing to replace non-regular file: {path}")
+        publish_mode = stat.S_IMODE(destination_stat.st_mode) & 0o777
     temporary_path: Path | None = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -237,8 +245,8 @@ def atomic_write_text(path: Path, content: str, *, encoding: str = "utf-8") -> N
             temporary_path = Path(handle.name)
             handle.write(content)
             handle.flush()
+            os.fchmod(handle.fileno(), publish_mode)
             os.fsync(handle.fileno())
-        os.chmod(temporary_path, existing_mode)
         os.replace(temporary_path, path)
         temporary_path = None
         try:

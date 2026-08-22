@@ -7,7 +7,7 @@ requires-python = ">=3.11"
 license = "MIT"
 dependencies = [
   "filelock==3.32.3",
-  "mcp==1.28.1",
+  "mcp==2.0.0",
   # 2.15.0 emits an upstream incomplete FastMCP lifespan annotation warning.
   "pydantic-settings==2.15.0",
   "PyYAML==6.0.3",

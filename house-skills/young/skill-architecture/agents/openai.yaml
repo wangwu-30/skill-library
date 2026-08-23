@@ -1,0 +1,6 @@
+interface:
+  display_name: "Skill Architecture"
+  short_description: "Design composable skill-system boundaries and handoffs"
+  default_prompt: "Use $skill-architecture to design this skill system."
+policy:
+  allow_implicit_invocation: false

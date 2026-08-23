@@ -68,6 +68,7 @@ extend-exclude = [
   "alirezarezvani-claude-skills",
   "composio-awesome-claude-skills",
   "levnikolaevich-claude-code-skills",
+  "ww-skills",
   "agentskills-spec",
   "obra-superpowers",
   "jezweb-claude-skills",

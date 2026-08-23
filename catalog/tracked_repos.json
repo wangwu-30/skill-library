@@ -101,6 +101,15 @@
       "notes": "Broad practical skill library."
     },
     {
+      "id": "wangwu-30-ww-skills",
+      "local_dir": "ww-skills",
+      "repo_url": "https://github.com/wangwu-30/ww-skills",
+      "kind": "community-library",
+      "priority": "high",
+      "tags": ["community", "codex", "claude", "software-engineering", "workflows"],
+      "notes": "Community skill library for software-engineering workflows."
+    },
+    {
       "id": "agentskills-spec",
       "local_dir": "agentskills-spec",
       "repo_url": "https://github.com/agentskills/agentskills",

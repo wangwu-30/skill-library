@@ -1,0 +1,14 @@
+[
+  {"id":"validation-01","query":"Define one owner and escalation path for three skills that all claim to summarize research.","should_trigger":true,"why":"Overlapping capabilities require suite ownership and router policy."},
+  {"id":"validation-02","query":"Design a no-match and conflict policy for a router that may select untrusted reference-only skills.","should_trigger":true,"why":"Skill-router architecture with trust-aware boundaries."},
+  {"id":"validation-03","query":"Split this 900-line skill into a small execution contract, reference material, and deterministic scripts without losing its intent.","should_trigger":true,"why":"Carrier-layer design and skill composability."},
+  {"id":"validation-04","query":"Plan a versioned migration from one research-skill taxonomy to another while preserving a single selection authority.","should_trigger":true,"why":"Evolution of a skill suite and its routing authority."},
+  {"id":"validation-05","query":"What trigger evidence and output cases should a router-facing skill own, versus the control plane?","should_trigger":true,"why":"Evaluation contracts are part of skill-system architecture."},
+  {"id":"validation-06","query":"Assess whether this capability should be a new skill, a reference file, a runtime command, or a router rule.","should_trigger":true,"why":"Explicit carrier and ownership architecture decision."},
+  {"id":"validation-07","query":"List skills tagged research in the catalog.","should_trigger":false,"why":"Simple catalog search belongs to skill-librarian."},
+  {"id":"validation-08","query":"Turn this vendor playbook into a young house skill with metadata and sources.","should_trigger":false,"why":"Conversion/materialization work belongs to skill-converter."},
+  {"id":"validation-09","query":"Score the latest output case using the shared rubric and update its scorecard.","should_trigger":false,"why":"Executing an evaluation artifact is not a request to architect a skill suite."},
+  {"id":"validation-10","query":"Approve this core payload hash for the MCP server.","should_trigger":false,"why":"Runtime trust approval is a governance action, not architecture consultation."},
+  {"id":"validation-11","query":"Does the repository use Streamable HTTP or stdio by default?","should_trigger":false,"why":"A factual repository question requires documentation lookup."},
+  {"id":"validation-12","query":"Add pagination to the React table and repair its unit tests.","should_trigger":false,"why":"Ordinary product engineering is outside the skill purpose."}
+]

@@ -1,0 +1,14 @@
+[
+  {"id":"train-01","query":"Design the capability boundaries and routing rules for a skill suite that has authoring, research, and runtime skills.","should_trigger":true,"why":"Direct skill-system architecture and routing design."},
+  {"id":"train-02","query":"Our skill router chooses both paper-research and web-research for the same request. Define ownership and a deterministic tie-breaker.","should_trigger":true,"why":"Overlapping-skill ownership and routing conflict."},
+  {"id":"train-03","query":"Where should reusable principles, detailed references, and executable runtime steps live in a house skill? Propose the layer boundaries.","should_trigger":true,"why":"Direct carrier-layer architecture question."},
+  {"id":"train-04","query":"Evolve a young skill without creating a second competing workflow; identify compatibility and evaluation contracts.","should_trigger":true,"why":"Skill evolution with canonical ownership and evaluation."},
+  {"id":"train-05","query":"Sketch a router contract for a new skills system: inputs, selection evidence, fallback, and no-match behavior.","should_trigger":true,"why":"Architecture of skill routing, not ordinary implementation."},
+  {"id":"train-06","query":"Review this proposed skill suite for duplicated capability, unclear owners, and missing trigger/output evaluation boundaries.","should_trigger":true,"why":"Suite-level capability and evaluation architecture."},
+  {"id":"train-07","query":"Search the local skill catalog for a runbook-writing skill and recommend the best match.","should_trigger":false,"why":"Library retrieval belongs to skill-librarian, not suite architecture."},
+  {"id":"train-08","query":"Convert this upstream SKILL.md into the repository house-skill format and preserve attribution.","should_trigger":false,"why":"Materialization/conversion belongs to skill-converter."},
+  {"id":"train-09","query":"Run the trigger evaluation set for skill-librarian and record observed client choices.","should_trigger":false,"why":"Evaluation execution is an evaluation workflow task, not architecture consultation."},
+  {"id":"train-10","query":"Can this young skill be promoted to core and added to the reviewed payload lock?","should_trigger":false,"why":"Promotion and trust decisions belong to lifecycle/governance."},
+  {"id":"train-11","query":"Which tracked repository contains an agent skill for writing technical documents?","should_trigger":false,"why":"A repository/catalog question, not a skill-system architecture design."},
+  {"id":"train-12","query":"Fix the retry bug in our FastAPI webhook handler and add tests.","should_trigger":false,"why":"Ordinary software work does not require a skill architecture design."}
+]

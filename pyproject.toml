@@ -6,8 +6,8 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 dependencies = [
-  "filelock==3.32.3",
-  "mcp==2.0.0",
+  "filelock==3.32.4",
+  "mcp==2.1.1",
   # 2.15.0 emits an upstream incomplete FastMCP lifespan annotation warning.
   "pydantic-settings==2.15.0",
   "PyYAML==6.0.3",
@@ -21,7 +21,7 @@ dev = [
   "pip-audit==2.10.1",
   "pytest==9.1.1",
   "pytest-cov==7.1.0",
-  "ruff==0.16.3",
+  "ruff==0.16.5",
 ]
 
 [tool.uv]

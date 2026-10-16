@@ -1,0 +1,6 @@
+interface:
+  display_name: "Tech Plan Rewrite"
+  short_description: "场景=技术方案：结论先行、待拍板表、glossary 术语"
+  default_prompt: "Use $writing-techplan-rewrite to rewrite this technical plan; glossary: <path>."
+policy:
+  allow_implicit_invocation: true

@@ -11,8 +11,8 @@ dependencies = [
   # 2.15.0 emits an upstream incomplete FastMCP lifespan annotation warning.
   "pydantic-settings==2.15.0",
   "PyYAML==6.0.3",
-  "starlette==1.6.0",
-  "uvicorn==0.52.4",
+  "starlette==1.8.0",
+  "uvicorn==0.54.0",
 ]
 
 [dependency-groups]
@@ -21,7 +21,7 @@ dev = [
   "pip-audit==2.10.1",
   "pytest==9.1.1",
   "pytest-cov==7.1.0",
-  "ruff==0.16.5",
+  "ruff==0.17.0",
 ]
 
 [tool.uv]

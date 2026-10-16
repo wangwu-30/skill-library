@@ -7,7 +7,7 @@ requires-python = ">=3.11"
 license = "MIT"
 dependencies = [
   "filelock==3.32.4",
-  "mcp==2.1.1",
+  "mcp==1.30.0",
   # 2.15.0 emits an upstream incomplete FastMCP lifespan annotation warning.
   "pydantic-settings==2.15.0",
   "PyYAML==6.0.3",
@@ -26,6 +26,11 @@ dev = [
 
 [tool.uv]
 package = false
+# Minimum patched versions of transitive dependencies.
+constraint-dependencies = [
+  "PyJWT==2.15.0",
+  "urllib3==2.8.0",
+]
 
 [tool.pytest.ini_options]
 addopts = "--strict-config --strict-markers -ra"

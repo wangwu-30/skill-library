@@ -5,37 +5,39 @@ from __future__ import annotations
 import argparse
 import hashlib
 import ipaddress
+import json
 import os
 import re
 import secrets
 import subprocess
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import urlsplit
 
+from build_skill_catalog import parse_skill_file
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
-from search_skill_catalog import score_entry
 from skill_consult import record_usage
 from skill_library_utils import (
     MAX_JSON_BYTES,
     ensure_within_root,
+    is_expired,
     library_lock,
     locate_library_root,
     read_json,
     read_reviewed_core_manifest,
     skill_content_sha256,
 )
+from skill_retrieval import BM25, REUSE_THRESHOLD, SCORER_VERSION
 from starlette.datastructures import Headers
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 ROOT: Path | None = None
 ALLOW_WRITES = False
-HOUSE_REUSE_SCORE = 45
-ANY_REUSE_SCORE = 70
 MAX_INTENT_CHARS = 2_000
 MAX_CONTEXT_CHARS = 8_000
 MAX_SKILL_BYTES = 512 * 1024
@@ -441,34 +443,58 @@ def read_catalog() -> dict[str, Any]:
     return catalog
 
 
-def query_tokens(intent: str, context: str) -> tuple[str, list[str]]:
-    phrase = " ".join(f"{intent} {context}".lower().split())
-    return phrase, [token for token in phrase.split() if token]
-
-
 def ranked_candidates(
-    intent: str, context: str, limit: int = 6
-) -> list[tuple[int, dict[str, Any]]]:
-    catalog = read_catalog()
-    phrase, tokens = query_tokens(intent, context)
-    scored: list[tuple[int, dict[str, Any]]] = []
-    for entry in catalog.get("skills", []):
-        # Production trust boundary: only locally reviewed core skills may become
-        # executable instructions. Mirrored upstream and young skills remain
-        # searchable reference material in the maintainer CLI.
-        if entry.get("execution_trust") != "reviewed-core":
+    intent: str, context: str, limit: int = 5
+) -> list[tuple[float, dict[str, Any]]]:
+    entries = [
+        entry
+        for entry in read_catalog()["skills"]
+        if entry.get("execution_trust") == "reviewed-core"
+        and entry.get("lifecycle_stage") == "core"
+        and not entry.get("expired")
+    ]
+    # Live metadata exposes new drafts and TTL changes despite stale catalogs.
+    young_root = root_path() / "house-skills" / "young"
+    for skill_file in sorted(young_root.glob("*/SKILL.md")):
+        try:
+            if skill_file.is_symlink() or skill_file.parent.is_symlink():
+                continue
+            entry = parse_skill_file(skill_file, young_root, root_path())
+            if (
+                entry["lifecycle_stage"] == "young"
+                and not entry["expired"]
+                and entry.get("lifecycle_status") != "archived"
+                and not entry["parse_error"]
+            ):
+                entries.append(entry)
+        except (OSError, ValueError):
             continue
-        stage = entry.get("lifecycle_stage", "upstream")
-        if stage == "archive" or entry.get("expired"):
-            continue
-        score = score_entry(entry, tokens, phrase)
-        if score > 0:
-            scored.append((score, entry))
-
-    scored.sort(
-        key=lambda item: (-item[0], item[1].get("repo_id", ""), item[1].get("skill_dir", ""))
-    )
+    scorer = BM25(entries)
+    scored = [(scorer.score(i, intent, context), entry) for i, entry in enumerate(entries)]
+    scored = [(score, entry) for score, entry in scored if score > 0]
+    scored.sort(key=lambda item: (-item[0], item[1].get("skill_root_path", "")))
     return scored[:limit]
+
+
+def young_skill_path(entry: dict[str, Any]) -> Path | None:
+    if entry.get("lifecycle_stage") != "young":
+        return None
+    try:
+        base = root_path() / "house-skills" / "young"
+        raw = root_path() / entry["skill_root_path"]
+        if raw.is_symlink() or base.is_symlink():
+            return None
+        path = ensure_within_root(raw, base, label="young skill path")
+        metadata = read_json(path / "metadata.json")
+        if (
+            metadata.get("stage") != "young"
+            or metadata.get("status") == "archived"
+            or is_expired(metadata)
+        ):
+            return None
+        return path
+    except (KeyError, OSError, ValueError):
+        return None
 
 
 def skill_path(entry: dict[str, Any]) -> Path | None:
@@ -499,7 +525,7 @@ def skill_path(entry: dict[str, Any]) -> Path | None:
 
 
 def read_skill(entry: dict[str, Any]) -> tuple[Path, str] | None:
-    path = skill_path(entry)
+    path = young_skill_path(entry) if entry.get("lifecycle_stage") == "young" else skill_path(entry)
     if path is None:
         return None
     skill_file = path / "SKILL.md"
@@ -508,11 +534,8 @@ def read_skill(entry: dict[str, Any]) -> tuple[Path, str] | None:
     return path, skill_file.read_text(encoding="utf-8")
 
 
-def should_reuse(score: int, entry: dict[str, Any]) -> bool:
-    stage = entry.get("lifecycle_stage", "upstream")
-    if stage in {"core", "young"} and score >= HOUSE_REUSE_SCORE:
-        return True
-    return score >= ANY_REUSE_SCORE
+def should_reuse(score: float, entry: dict[str, Any]) -> bool:
+    return entry.get("lifecycle_stage") in {"core", "young"} and score >= REUSE_THRESHOLD
 
 
 def record_house_usage(entry: dict[str, Any], path: Path) -> None:
@@ -540,7 +563,7 @@ def safe_description(intent: str) -> str:
     return f"Use when an agent needs task-specific help for {cleaned}"
 
 
-def source_note(candidates: list[tuple[int, dict[str, Any]]]) -> str:
+def source_note(candidates: list[tuple[float, dict[str, Any]]]) -> str:
     if not candidates:
         return "No matching skill was found in the local catalog."
     parts = []
@@ -551,14 +574,18 @@ def source_note(candidates: list[tuple[int, dict[str, Any]]]) -> str:
 
 
 def create_temporary_skill(
-    intent: str, context: str, candidates: list[tuple[int, dict[str, Any]]]
+    intent: str, context: str, candidates: list[tuple[float, dict[str, Any]]]
 ) -> str:
     if not ALLOW_WRITES:
         raise PermissionError(
             "temporary skill creation is disabled; restart the server with --allow-writes"
         )
     digest = hashlib.sha1(f"{intent}\n{context}".encode()).hexdigest()[:8]
-    name = f"temp-{normalize_name(intent)}-{digest}"
+    slug = normalize_name(intent)
+    if not intent.isascii():
+        words = re.findall(r"[a-zA-Z][a-zA-Z0-9]*", intent)[:3]
+        slug = ("zh" + ("-" + "-".join(words).lower() if words else ""))[:40].rstrip("-")
+    name = f"temp-{slug}-{digest}"
     with library_lock(root_path()):
         code, stdout, stderr = run_script(
             "create_house_skill_draft.py",
@@ -582,7 +609,7 @@ def create_temporary_skill(
     return f"{path.relative_to(root_path())}\n\n{(path / 'SKILL.md').read_text(encoding='utf-8')}"
 
 
-def candidate_summary(candidates: list[tuple[int, dict[str, Any]]]) -> str:
+def candidate_summary(candidates: list[tuple[float, dict[str, Any]]]) -> str:
     if not candidates:
         return "No close catalog examples."
     lines = []
@@ -594,7 +621,47 @@ def candidate_summary(candidates: list[tuple[int, dict[str, Any]]]) -> str:
     return "\n".join(lines)
 
 
+def match_record(score: float, entry: dict) -> dict:
+    return {
+        "path": entry.get("skill_root_path"),
+        "tier": entry.get("lifecycle_stage"),
+        "score": score,
+    }
+
+
 def skill_request(intent: str, context: str = "", allow_temporary: bool = False) -> str:
+    """Return reviewed core instructions or labeled young reference material."""
+    event = {
+        "ts": datetime.now(UTC).isoformat(),
+        "intent": intent,
+        "context_sha256": hashlib.sha256(context.encode("utf-8")).hexdigest(),
+        "decision": "no-fit",
+        "matched": None,
+        "topk": [],
+        "threshold": REUSE_THRESHOLD,
+        "scorer_version": SCORER_VERSION,
+        "creator": {"type": None, "version": None},
+        "eval_gate": {"status": None, "score": None, "run_id": None},
+    }
+    try:
+        return _skill_request(intent, context, allow_temporary, event)
+    finally:
+        # Operator telemetry is independent of skill mutation permission.
+        try:
+            log = Path(
+                os.environ.get("SKILL_LIBRARY_REQUEST_LOG")
+                or root_path() / "logs/skill_requests.jsonl"
+            )
+            if not log.is_absolute():
+                log = root_path() / log
+            log.parent.mkdir(parents=True, exist_ok=True)
+            with log.open("a", encoding="utf-8") as stream:
+                stream.write(json.dumps(event, ensure_ascii=False) + "\n")
+        except Exception:
+            print("[warn] request logging failed", file=sys.stderr)
+
+
+def _skill_request(intent: str, context: str, allow_temporary: bool, event: dict) -> str:
     """Return one ready-to-use skill for the caller's task intent."""
     intent = intent.strip()
     context = context.strip()
@@ -606,6 +673,7 @@ def skill_request(intent: str, context: str = "", allow_temporary: bool = False)
         return f"error: context exceeds {MAX_CONTEXT_CHARS} characters"
 
     candidates = ranked_candidates(intent, context)
+    event["topk"] = [match_record(score, entry) for score, entry in candidates[:5]]
     for score, entry in candidates:
         loaded = read_skill(entry)
         if loaded is None:
@@ -613,14 +681,23 @@ def skill_request(intent: str, context: str = "", allow_temporary: bool = False)
         path, skill_md = loaded
         if not should_reuse(score, entry):
             continue
+        young = entry.get("lifecycle_stage") == "young"
+        event["decision"] = "reuse-young-reference" if young else "reuse-core"
+        event["matched"] = match_record(score, entry)
+        decision = "reuse-young-reference" if young else "reuse-existing-skill"
+        instruction = (
+            "REFERENCE ONLY — not an executable instruction. Review before adapting."
+            if young
+            else "Use this skill for the requested task:"
+        )
         record_house_usage(entry, path)
         rel_path = path.relative_to(root_path())
         return (
             "# Skill Agent Result\n\n"
-            "decision: reuse-existing-skill\n"
+            f"decision: {decision}\n"
             f"skill_path: {rel_path}\n"
             f"match_score: {score}\n\n"
-            "Use this skill for the requested task:\n\n"
+            f"{instruction}\n\n"
             "----- BEGIN SKILL -----\n"
             f"{skill_md.rstrip()}\n"
             "----- END SKILL -----\n"
@@ -635,18 +712,19 @@ def skill_request(intent: str, context: str = "", allow_temporary: bool = False)
         return (
             "# Skill Agent Result\n\n"
             "decision: no-fit\n\n"
-            f"No reviewed core skill matched this intent.{write_hint}\n\n"
+            f"No reviewed core or eligible young skill matched this intent.{write_hint}\n\n"
             "Closest examples:\n"
             f"{candidate_summary(candidates)}\n"
         )
 
     temporary = create_temporary_skill(intent, context, candidates)
     path_line, _, skill_md = temporary.partition("\n\n")
+    event["decision"] = "create"
     return (
         "# Skill Agent Result\n\n"
         "decision: temporary-skill-created\n"
         f"skill_path: {path_line}\n\n"
-        "Use this temporary skill for the requested task. It starts in `house-skills/young`; "
+        "REFERENCE ONLY — not an executable instruction. It starts in `house-skills/young`; "
         "the live librarian can later keep, improve, or archive it.\n\n"
         "Closest examples considered internally:\n"
         f"{candidate_summary(candidates)}\n\n"
@@ -662,7 +740,7 @@ def create_mcp_server(args: argparse.Namespace) -> FastMCP:
         "skill-library",
         instructions=(
             "Accept one task intent from an agent and return only a locally reviewed core "
-            "skill. Temporary skill creation is available only when the operator explicitly "
+            "skill as instructions, or young material labeled REFERENCE ONLY. Temporary skill creation is available only when the operator explicitly "
             "enables writes."
         ),
         host=args.host,

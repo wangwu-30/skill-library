@@ -54,3 +54,6 @@ __pycache__/
 .coverage
 coverage.xml
 .skill-library.lock
+
+# Local request telemetry (may contain private intents).
+/logs/

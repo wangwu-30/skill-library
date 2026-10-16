@@ -10,7 +10,7 @@ This repository is the control plane, not a bundled mirror of every tracked upst
 - `house-skills/young/` contains drafts. It is not executable through MCP by default.
 - `catalog/reviewed_core.lock.json` is the code-reviewed allowlist for core payloads. The catalog marks a core skill `reviewed-core` only while its deterministic payload SHA-256 matches the allowlist; otherwise it remains reference-only.
 - tracked upstream repositories are untrusted, reference-only source material. Each upstream declaration must have a reviewed commit in `catalog/tracked_repos.lock.json`; a pin provides reproducibility, not endorsement.
-- the MCP server is read-only by default. It does not record usage or create drafts unless the operator starts it with `--allow-writes`.
+- the MCP server is read-only by default. It does not record usage or create drafts unless the operator starts it with `--allow-writes`. Best-effort request telemetry is appended independently of this flag; see [retrieval and request logs](docs/retrieval-and-request-log.md).
 - generated `CATALOG.md`, `catalog/skill_catalog.json`, and `memory.md` are local outputs and are intentionally not committed.
 
 See [the control-plane charter](docs/skill-control-plane-charter.md) for the complete boundary.
@@ -60,7 +60,7 @@ The server exposes one tool:
 skill_request(intent, context="", allow_temporary=false)
 ```
 
-Smoke-test the integration by asking the client to list MCP tools and then call `skill_request` with `intent="Find a skill for maintaining this skill catalog"`. A healthy server returns either `decision: reuse-existing-skill` with a path under `house-skills/core`, or `decision: no-fit`. It must not return upstream or `young` skill text.
+Smoke-test the integration by asking the client to list MCP tools and then call `skill_request` with `intent="Find a skill for maintaining this skill catalog"`. A healthy server returns either `decision: reuse-existing-skill` with a path under `house-skills/core`, or `decision: no-fit`. It may also return `decision: reuse-young-reference` with a young skill clearly labeled REFERENCE ONLY, never executable instructions. Upstream text is not returned.
 
 The sample configuration is read-only. Enabling `--allow-writes` is an operator decision that permits creation under `house-skills/young/` when the caller also requests a temporary skill. Do not enable it for an untrusted client or shared production service.
 

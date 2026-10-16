@@ -1,6 +1,6 @@
 # Agent Usage
 
-The supported agent interfaces are MCP stdio and standard Streamable HTTP. Stdio remains the default. Both are read-only by default and return only skills that the catalog marks `reviewed-core`. A path under `house-skills/core/` is necessary but not sufficient: the current deterministic payload SHA-256 must also match the code-reviewed entry in `catalog/reviewed_core.lock.json`. Upstream mirrors, `young` drafts, unlisted core skills, and changed core payloads remain reference material.
+The supported agent interfaces are MCP stdio and standard Streamable HTTP. Stdio remains the default. Both disable skill mutations by default and return executable instructions only for skills that the catalog marks `reviewed-core`. A path under `house-skills/core/` is necessary but not sufficient: the current deterministic payload SHA-256 must also match the code-reviewed entry in `catalog/reviewed_core.lock.json`. Upstream mirrors, `young` drafts, unlisted core skills, and changed core payloads remain reference material.
 
 ## Install
 
@@ -85,10 +85,10 @@ After configuring the client:
 
 1. confirm `skill_request` appears in the client's MCP tool list;
 2. call it with `intent="Find a skill for maintaining this skill catalog"`;
-3. accept either `decision: reuse-existing-skill` or `decision: no-fit`;
+3. accept `decision: reuse-existing-skill`, `decision: reuse-young-reference`, or `decision: no-fit`;
 4. if a skill is returned, confirm `skill_path` is under `house-skills/core/`.
 
-The server may build the ignored catalog files on first use. It must not return or execute upstream or `young` content. For core skills, catalog generation recomputes the deterministic payload SHA-256 recursively across files including `SKILL.md`, `agents/`, `references/`, `scripts/`, and `assets/`; mutable `metadata.json`, `__pycache__/`, and `.pyc` files are excluded, and symbolic links are rejected. Only a value matching `catalog/reviewed_core.lock.json` receives `reviewed-core` status.
+The server may build the ignored catalog files on first use. It must not return upstream content. Eligible young content is returned only with decision `reuse-young-reference` and an explicit REFERENCE ONLY warning, never as executable instructions. See [retrieval and request logs](retrieval-and-request-log.md) for scoring, lifecycle checks, and telemetry. For core skills, catalog generation recomputes the deterministic payload SHA-256 recursively across files including `SKILL.md`, `agents/`, `references/`, `scripts/`, and `assets/`; mutable `metadata.json`, `__pycache__/`, and `.pyc` files are excluded, and symbolic links are rejected. Only a value matching `catalog/reviewed_core.lock.json` receives `reviewed-core` status.
 
 ## Tool Contract
 

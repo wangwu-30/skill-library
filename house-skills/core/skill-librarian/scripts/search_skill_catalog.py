@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from skill_library_utils import locate_library_root, read_json
+from skill_retrieval import BM25
 
 MAX_QUERY_CHARS = 2_000
 MAX_RESULTS = 100
@@ -36,56 +37,8 @@ def resolve_root(cli_root: Path | None) -> Path:
     return locate_library_root(cli_root, Path(__file__))
 
 
-def score_entry(entry: dict, query_tokens: list[str], query_phrase: str) -> int:
-    haystacks = {
-        "name": (entry.get("name", "") + " " + entry.get("title", "")).lower(),
-        "description": entry.get("description", "").lower(),
-        "path": (entry.get("skill_dir", "") + " " + entry.get("skill_file", "")).lower(),
-        "repo": (
-            entry.get("repo_id", "")
-            + " "
-            + " ".join(entry.get("repo_tags", []))
-            + " "
-            + entry.get("repo_notes", "")
-        ).lower(),
-    }
-
-    score = 0
-    if query_phrase and query_phrase in haystacks["name"]:
-        score += 50
-    if query_phrase and query_phrase in haystacks["description"]:
-        score += 25
-
-    for token in query_tokens:
-        if token in haystacks["name"]:
-            score += 20
-        if token in haystacks["description"]:
-            score += 10
-        if token in haystacks["path"]:
-            score += 8
-        if token in haystacks["repo"]:
-            score += 6
-
-    if entry.get("repo_priority") == "core":
-        score += 4
-    elif entry.get("repo_priority") == "high":
-        score += 2
-
-    lifecycle_stage = entry.get("lifecycle_stage", "upstream")
-    if lifecycle_stage == "core":
-        score += 20
-    elif lifecycle_stage == "young":
-        score += 10
-    elif lifecycle_stage == "archive":
-        score -= 40
-
-    if entry.get("expired"):
-        score -= 80
-
-    if entry.get("usage_tracking_mode") in {"manual", "hub"}:
-        score += min(int(entry.get("use_count", 0) or 0), 5) * 3
-
-    return score
+def score_entry(entry: dict, query_tokens: list[str], query_phrase: str) -> float:
+    return BM25([entry]).score(0, query_phrase or " ".join(query_tokens))
 
 
 def main() -> int:
@@ -107,17 +60,16 @@ def main() -> int:
     if not isinstance(catalog.get("skills"), list):
         raise SystemExit("catalog is invalid: missing skills list")
 
-    query_phrase = " ".join(args.query.lower().split())
-    query_tokens = [token for token in query_phrase.split() if token]
+    scorer = BM25(catalog["skills"])
 
     scored = []
-    for entry in catalog["skills"]:
+    for position, entry in enumerate(catalog["skills"]):
         stage = entry.get("lifecycle_stage", "upstream")
         if args.stage != "any" and stage != args.stage:
             continue
         if not args.include_archived and (stage == "archive" or entry.get("expired")):
             continue
-        score = score_entry(entry, query_tokens, query_phrase)
+        score = scorer.score(position, args.query)
         if score > 0:
             scored.append((score, entry))
 

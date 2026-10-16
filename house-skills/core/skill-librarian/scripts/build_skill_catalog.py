@@ -125,6 +125,7 @@ def parse_skill_file(
         "name": frontmatter.get("name", ""),
         "description": frontmatter.get("description", ""),
         "title": title,
+        "tags": frontmatter.get("tags", []),
         "parse_error": parse_error,
         "lifecycle_stage": lifecycle_stage,
         "lifecycle_status": metadata.get("status", ""),

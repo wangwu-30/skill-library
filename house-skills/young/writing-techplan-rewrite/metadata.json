@@ -1,0 +1,41 @@
+{
+  "schema_version": 2,
+  "version": "0.1.0",
+  "owner": "wangwu",
+  "stage": "young",
+  "status": "active",
+  "created_at": "2026-10-17T02:00:00+08:00",
+  "updated_at": "2026-10-17T02:00:00+08:00",
+  "last_used_at": null,
+  "use_count": 0,
+  "expires_at": null,
+  "usage_tracking": {
+    "mode": "none"
+  },
+  "derives_from": null,
+  "replaces": [],
+  "compatibility": {
+    "backward_compatible": true,
+    "notes": "initial"
+  },
+  "source": {
+    "kind": "house",
+    "repo_url": "local://house-skills/young/writing-techplan-rewrite",
+    "skill_path": "house-skills/young/writing-techplan-rewrite",
+    "author": "wangwu"
+  },
+  "domain": "writing",
+  "scenario": "技术方案",
+  "scenario_key": "techplan",
+  "audience": "工程师/决策人",
+  "conflicts_with": [
+    "technical-blog-editor",
+    "scenario:blog"
+  ],
+  "notes": "Write/rewrite separated; glossary path parameter; report.py advisory only.",
+  "tags": [
+    "writing",
+    "scenario:techplan",
+    "技术方案"
+  ]
+}
